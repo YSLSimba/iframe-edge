@@ -296,16 +296,17 @@ body {
     min-width: 3ch;
 }
 
-/* ── Controls ───────────────────────────────────────────── */
+/* ── Controls ── */
 .controls {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
+/* Slightly smaller to let controls breathe */
 .ctrl-btn {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     border-radius: 10px;
     background: var(--overlay-5);
     border: 1px solid var(--border);
@@ -314,6 +315,13 @@ body {
     align-items: center;
     justify-content: center;
     transition: all var(--tr);
+}
+
+/* Secondary (shuffle/repeat) — slimmer */
+.ctrl-btn.ctrl-sm {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
 }
 
 .ctrl-btn:hover {
@@ -327,8 +335,8 @@ body {
 }
 
 .ctrl-btn.play {
-    width: 46px;
-    height: 46px;
+    width: 44px;
+    height: 44px;
     border-radius: 13px;
     background: var(--accent);
     border-color: transparent;
@@ -337,6 +345,21 @@ body {
 
 .ctrl-btn.play:hover {
     filter: brightness(1.1);
+}
+
+/* Shuffle ON / Repeat ON */
+.ctrl-btn.shuffle-on,
+.ctrl-btn.repeat-on {
+    color: var(--accent);
+    background: var(--accent-dim);
+    border-color: rgba(29, 185, 84, 0.3);
+}
+
+/* Repeat ONE (track loop) — slightly stronger */
+.ctrl-btn[data-mode="track"] {
+    color: var(--accent);
+    background: rgba(29, 185, 84, 0.28);
+    border-color: rgba(29, 185, 84, 0.4);
 }
 
 /* ── Right column (lyrics) ──────────────────────────────── */
@@ -733,8 +756,37 @@ html.sz-m .progress-times {
     display: none;
 }
 
+/* M: controls overlaid above track-info, backdrop blur for readability */
 html.sz-m .controls {
-    display: none;
+    display: flex;
+    position: absolute;
+    bottom: 44px;
+    /* sits just above the track-name gradient */
+    left: 0;
+    right: 0;
+    z-index: 4;
+    justify-content: center;
+    gap: 5px;
+    padding: 6px 0;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.4));
+}
+
+html.sz-m .controls .ctrl-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.45);
+    border-color: rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(4px);
+}
+
+html.sz-m .controls .ctrl-btn.play {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--accent);
+    border-color: transparent;
+    color: #000;
 }
 
 html.sz-m .col-right {
@@ -772,8 +824,8 @@ html.sz-l .col-left-inner {
 }
 
 html.sz-l .album-wrap {
-    width: 86px;
-    height: 86px;
+    width: 70px;
+    height: 70px;
     flex-shrink: 0;
 }
 
@@ -837,7 +889,7 @@ html.sz-xl .col-left-inner {
 
 html.sz-xl .album-wrap {
     width: 100%;
-    height: 178px;
+    height: 130px;
     flex-shrink: 0;
 }
 

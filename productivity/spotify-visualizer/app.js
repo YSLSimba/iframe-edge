@@ -31,6 +31,8 @@
         progressTimer: null,
         lyricsData: [],       // [{timeMs, text}]
         lyricsTrackId: null,
+        shuffleOn: false,          // Spotify shuffle state
+        repeatMode: "off",         // "off" | "context" | "track"
         autoScroll: true,          // auto-follow active lyric line
         autoScrollResumeTimer: null,
         sizeClass: '',             // 'sz-m' | 'sz-l' | 'sz-xl'
@@ -300,6 +302,38 @@
         }
     });
 
+    // Shuffle: toggle on/off
+    $("shuffleBtn").addEventListener("click", async () => {
+        const newState = !state.shuffleOn;
+        await spotifyAction("PUT", `/me/player/shuffle?state=${newState}`);
+        state.shuffleOn = newState;
+        updateShuffleRepeat();
+    });
+
+    // Repeat: cycle off -> context (all) -> track (one) -> off
+    $("repeatBtn").addEventListener("click", async () => {
+        const modes = ["off", "context", "track"];
+        const idx = modes.indexOf(state.repeatMode || "off");
+        const next = modes[(idx + 1) % modes.length];
+        await spotifyAction("PUT", `/me/player/repeat?state=${next}`);
+        state.repeatMode = next;
+        updateShuffleRepeat();
+    });
+
+    function updateShuffleRepeat() {
+        const sBtn = $("shuffleBtn");
+        const rBtn = $("repeatBtn");
+        if (!sBtn || !rBtn) return;
+        // Shuffle
+        sBtn.classList.toggle("shuffle-on", !!state.shuffleOn);
+        // Repeat
+        const mode = state.repeatMode || "off";
+        rBtn.classList.toggle("repeat-on", mode !== "off");
+        rBtn.dataset.mode = mode;
+        // Tooltip showing current state
+        rBtn.title = mode === "off" ? "Repeat: off" : mode === "context" ? "Repeat: all" : "Repeat: one";
+    }
+
     /* ─────────────────────────────────────────────────────────────────────────
      *  PROGRESS BAR interpolation
      * ────────────────────────────────────────────────────────────────────────*/
@@ -546,6 +580,11 @@
         renderProgress();
         setPlayIcon(state.isPlaying);
 
+        // Shuffle / repeat state
+        if (data.shuffle_state !== undefined) state.shuffleOn = data.shuffle_state;
+        if (data.repeat_state !== undefined) state.repeatMode = data.repeat_state;
+        updateShuffleRepeat();
+
         if (state.isPlaying) startProgressTick();
         else stopProgressTick();
 
@@ -560,7 +599,7 @@
             updateAlbumArt(artUrl);
 
             // Fetch lyrics for new track (XL layout)
-            const isXL = window.innerWidth >= 800;
+            const isXL = state.sizeClass === 'sz-xl';
             if (isXL) {
                 state.lyricsData = [];
                 state.lyricsTrackId = trackId;
