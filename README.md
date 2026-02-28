@@ -79,5 +79,3 @@ Pour utiliser ces widgets sur votre installation Corsair, vous aurez besoin de :
 
 > **🎉 Et voilà !** Le widget se chargera directement depuis GitHub Pages.
 ---
-
-*Developed with ❤️ for the community. / Développé avec ❤️ pour la communauté.*
