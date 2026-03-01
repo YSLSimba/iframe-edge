@@ -18,6 +18,7 @@
         RTOKEN: "pa_spotify_refresh_token",
         RTOKEN_REMEMBER: "pa_spotify_refresh_token_remember",
     };
+    const HASH_PREFIX = "#cfg=";
     const SS = {
         RTOKEN: "pa_spotify_refresh_token_session",
     };
@@ -74,6 +75,51 @@
         localStorage.removeItem(LS.RTOKEN);
     }
 
+    /* ─────────────────────────────────────────────────────────────────────────
+     *  URL HASH CONFIG — survives iCUE widget switching
+     * ────────────────────────────────────────────────────────────────────────*/
+    function encodeConfig(cid, rtkn) {
+        try { return btoa(JSON.stringify({ c: cid || "", r: rtkn || "" })); }
+        catch (_) { return ""; }
+    }
+
+    function decodeConfig(encoded) {
+        try { return JSON.parse(atob(encoded)); }
+        catch (_) { return null; }
+    }
+
+    // On startup: if localStorage is empty, restore from URL hash
+    function loadFromHash() {
+        const hash = window.location.hash;
+        if (!hash.startsWith(HASH_PREFIX)) return;
+        const cfg = decodeConfig(hash.slice(HASH_PREFIX.length));
+        if (!cfg) return;
+        if (cfg.c && !localStorage.getItem(LS.CID)) {
+            localStorage.setItem(LS.CID, cfg.c);
+        }
+        if (cfg.r && !getRefreshToken()) {
+            setRefreshToken(cfg.r, true);
+        }
+    }
+
+    // After save: keep URL hash in sync so iCUE always has the latest config
+    function updateHashConfig(cid, rtkn) {
+        try {
+            const encoded = encodeConfig(cid, rtkn);
+            if (encoded) {
+                const url = window.location.pathname + window.location.search + HASH_PREFIX + encoded;
+                window.history.replaceState(null, "", url);
+            }
+        } catch (_) {}
+    }
+
+    function buildConfigUrl() {
+        const cid = localStorage.getItem(LS.CID) || "";
+        const rtkn = getRefreshToken();
+        const encoded = encodeConfig(cid, rtkn);
+        return window.location.origin + window.location.pathname + HASH_PREFIX + encoded;
+    }
+
     function migrateRefreshTokenStorage() {
         const legacy = localStorage.getItem(LS.RTOKEN);
         if (!legacy) return;
@@ -119,6 +165,9 @@
             sessionTitle: "Session expirée",
             sessionSub: "Votre autorisation Spotify a été révoquée ou est expirée. Reconnectez-vous pour continuer.",
             reconnect: "Se reconnecter",
+            copyUrlBtn: "Copier l'URL pour iCUE",
+            icueHint: "Copiez cette URL et collez-la dans iCUE à la place de l'URL actuelle — vos identifiants seront restaurés automatiquement même si vous changez de widget.",
+            toastUrlCopied: "✓ URL copiée — collez-la dans iCUE",
         },
         en: {
             title: "Spotify",
@@ -145,6 +194,9 @@
             sessionTitle: "Session expired",
             sessionSub: "Your Spotify authorization was revoked or expired. Reconnect to continue.",
             reconnect: "Reconnect",
+            copyUrlBtn: "Copy URL for iCUE",
+            icueHint: "Copy this URL and paste it in iCUE instead of the current URL — your credentials will be restored automatically even if you switch widgets.",
+            toastUrlCopied: "✓ URL copied — paste it in iCUE",
         },
     };
 
@@ -197,6 +249,8 @@
         el("t-remember-token-hint", "rememberTokenHint");
         el("t-lyrics", "lyricsLbl");
         el("t-no-song", "noSong");
+        el("t-icue-hint", "icueHint");
+        el("t-copy-url", "copyUrlBtn");
 
         const saveBtn = $("saveBtn");
         if (saveBtn) saveBtn.textContent = t("save");
@@ -254,12 +308,24 @@
         localStorage.setItem(LS.CID, cid);
         localStorage.setItem(LS.RTOKEN_REMEMBER, remember ? "1" : "0");
         setRefreshToken(rtkn, remember);
+        // Keep URL hash in sync — iCUE will persist the config across widget switches
+        updateHashConfig(cid, rtkn);
         showToast(t("toastSaved"));
         closeSettings();
         // Reset token so we re-fetch
         state.accessToken = null;
         state.tokenExpiry = 0;
         startPolling();
+    });
+
+    $("copyUrlBtn").addEventListener("click", () => {
+        const url = buildConfigUrl();
+        navigator.clipboard.writeText(url).then(() => {
+            const btn = $("copyUrlBtn");
+            btn.classList.add("copied");
+            showToast(t("toastUrlCopied"));
+            setTimeout(() => btn.classList.remove("copied"), 2500);
+        }).catch(() => showToast(t("toastUrlCopied")));
     });
 
     /* ─────────────────────────────────────────────────────────────────────────
@@ -835,6 +901,7 @@
      *  INIT
      * ────────────────────────────────────────────────────────────────────────*/
     function init() {
+        loadFromHash();          // restore credentials from URL hash if localStorage is empty
         migrateRefreshTokenStorage();
         applyTheme(state.theme);
         applyLang(state.lang);

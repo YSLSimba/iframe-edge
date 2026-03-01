@@ -639,6 +639,32 @@ html.sz-xl .lyric-line.active {
     filter: brightness(1.08);
 }
 
+.copy-url-btn {
+    width: 100%;
+    padding: 10px;
+    background: var(--overlay-5);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    color: var(--text-2);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all var(--tr);
+    cursor: pointer;
+    margin-top: 8px;
+}
+
+.copy-url-btn:hover {
+    background: var(--overlay-8);
+    color: var(--text-1);
+    border-color: var(--border-h);
+}
+
+.copy-url-btn.copied {
+    color: var(--accent);
+    border-color: rgba(29, 185, 84, 0.35);
+}
+
 .divider {
     height: 1px;
     background: var(--border);
