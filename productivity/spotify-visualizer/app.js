@@ -366,10 +366,20 @@
                 method,
                 headers: { Authorization: "Bearer " + token },
             });
-            // Poll immediately after the skip resolves; 2 s fallback if Spotify is slow to update
-            poll();
-            setTimeout(poll, 2000);
+            pollUntilTrackChanges();
         } catch (_) { }
+    }
+
+    // After a skip, poll at short intervals until Spotify reflects the new track.
+    // Each scheduled poll bails out early if the track already changed, avoiding wasted calls.
+    function pollUntilTrackChanges() {
+        const prevId = state.trackId;
+        [300, 700, 1300, 2200, 3500].forEach(ms => {
+            setTimeout(() => {
+                if (state.trackId !== prevId) return; // already updated
+                poll();
+            }, ms);
+        });
     }
 
     // Optimistic UI clear on skip: wipe track info instantly so the user sees the change immediately
