@@ -2,12 +2,12 @@
 <html lang="en">
 
 <head>
-    <script src="../theme-loader.js"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="referrer" content="no-referrer" />
     <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.spotify.com https://accounts.spotify.com https://lrclib.net; object-src 'none'; base-uri 'none'; form-action 'none';" />
+        content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.spotify.com https://accounts.spotify.com https://lrclib.net; object-src 'none'; base-uri 'none'; form-action 'none';" />
+    <script src="../theme-loader.js"></script>
     <title>Spotify Visualizer</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -33,8 +33,7 @@
             </div>
             <span class="hdr-title" id="t-title">Spotify</span>
             <button class="icon-btn" id="themeToggle" aria-label="Toggle theme">🌙</button>
-            <button class="icon-btn" id="langToggle" aria-label="Toggle language"
-                style="font-size:11px;font-weight:700;">FR</button>
+            <button class="icon-btn" id="langToggle" aria-label="Toggle language">FR</button>
             <button class="icon-btn" id="settingsToggle" aria-label="Settings">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                     stroke-linecap="round">
@@ -52,7 +51,7 @@
                 <div class="col-left-inner" id="colLeftInner">
                     <div class="album-wrap" id="albumWrap">
                         <div class="no-art" id="noArt">♪</div>
-                        <img id="albumImg" src="" alt="Album art" style="display:none;" />
+                        <img id="albumImg" src="" alt="Album art" class="ui-hidden" />
                         <div class="vinyl-ring" id="vinylRing"></div>
                     </div>
                     <div class="track-info" id="trackInfo">
@@ -123,8 +122,7 @@
                 </div>
                 <!-- Scroll controls -->
                 <div class="lyrics-ctrl-bar" id="lyricsCtrlBar">
-                    <button class="lyrics-ctrl-btn active" id="lyricsAutoBtn" title="Auto-scroll"
-                        style="font-size:7.5px; font-weight:700; letter-spacing:0.5px;">
+                    <button class="lyrics-ctrl-btn active" id="lyricsAutoBtn" title="Auto-scroll">
                         AUTO
                     </button>
                     <button class="lyrics-ctrl-btn" id="lyricsScrollUp" aria-label="Scroll up">
@@ -148,7 +146,7 @@
             <div class="state-icon" id="stateIcon">⚙️</div>
             <div class="state-title" id="stateTitle">Setup Required</div>
             <div class="state-sub" id="stateSub">Open settings to add your Spotify Client ID and Refresh Token.</div>
-            <button class="state-btn" id="stateAction" style="display:none;"></button>
+            <button class="state-btn ui-hidden" id="stateAction"></button>
         </div>
 
         <!-- Settings panel -->

@@ -74,11 +74,16 @@
         const legacy = localStorage.getItem(LS.RTOKEN);
         if (!legacy) return;
 
-        // Backward compatibility: existing installs with persisted token keep persistence enabled.
-        if (localStorage.getItem(LS.RTOKEN_REMEMBER) === null) {
-            localStorage.setItem(LS.RTOKEN_REMEMBER, "1");
-        }
+        const remember = localStorage.getItem(LS.RTOKEN_REMEMBER);
         sessionStorage.setItem(SS.RTOKEN, legacy);
+
+        if (remember === "1") {
+            return;
+        }
+
+        // Hardening: default legacy installs to session-only unless user explicitly opted in.
+        localStorage.setItem(LS.RTOKEN_REMEMBER, "0");
+        localStorage.removeItem(LS.RTOKEN);
     }
 
     /* ─────────────────────────────────────────────────────────────────────────
@@ -263,10 +268,10 @@
         const btn = $("stateAction");
         if (btnLabel) {
             btn.textContent = btnLabel;
-            btn.style.display = "";
+            btn.classList.remove("ui-hidden");
             btn.onclick = btnCb;
         } else {
-            btn.style.display = "none";
+            btn.classList.add("ui-hidden");
         }
         $("stateOverlay").classList.remove("hidden");
     }
@@ -361,23 +366,34 @@
                 method,
                 headers: { Authorization: "Bearer " + token },
             });
-            // Re-poll with two attempts: Spotify can be slow to register track changes
-            setTimeout(poll, 600);
+            // Poll immediately after the skip resolves; 2 s fallback if Spotify is slow to update
+            poll();
             setTimeout(poll, 2000);
         } catch (_) { }
     }
 
-    // Clear lyrics immediately on skip so old lyrics never linger on the new song
-    function clearLyricsOnSkip() {
+    // Optimistic UI clear on skip: wipe track info instantly so the user sees the change immediately
+    function clearOnSkip() {
+        // Lyrics
         state.lyricsData = [];
-        // Sentinel value: blocks any in-flight fetch from the previous track from resolving
-        state.lyricsTrackId = null;
+        state.lyricsTrackId = null; // sentinel — blocks in-flight fetch from previous track
         const needsLyrics = (state.sizeClass === 'sz-xl' || state.sizeClass === 'sz-l');
         if (needsLyrics) renderLyricsLoading();
+
+        // Track info — keep state.trackId intact so poll can detect the real new track ID
+        $("trackName").textContent = "—";
+        $("trackArtist").textContent = "—";
+        $("trackAlbum").textContent = "";
+        updateAlbumArt(null);
+
+        // Progress reset
+        state.progressMs = 0;
+        state.durationMs = 0;
+        renderProgress();
     }
 
-    $("prevBtn").addEventListener("click", () => { clearLyricsOnSkip(); spotifyAction("POST", "/me/player/previous"); });
-    $("nextBtn").addEventListener("click", () => { clearLyricsOnSkip(); spotifyAction("POST", "/me/player/next"); });
+    $("prevBtn").addEventListener("click", () => { clearOnSkip(); spotifyAction("POST", "/me/player/previous"); });
+    $("nextBtn").addEventListener("click", () => { clearOnSkip(); spotifyAction("POST", "/me/player/next"); });
     $("playBtn").addEventListener("click", () => {
         if (state.isPlaying) {
             spotifyAction("PUT", "/me/player/pause");
@@ -613,16 +629,16 @@
 
         if (url && url.startsWith("https://")) {
             img.onload = () => {
-                img.style.display = "";
-                noArt.style.display = "none";
+                img.classList.remove("ui-hidden");
+                noArt.classList.add("ui-hidden");
                 // Only animate in background after image loads
                 bgImg.src = url;
                 bgImg.onload = () => { bgImg.style.opacity = "1"; };
             };
             img.src = url;
         } else {
-            img.style.display = "none";
-            noArt.style.display = "";
+            img.classList.add("ui-hidden");
+            noArt.classList.remove("ui-hidden");
             bgImg.style.opacity = "0";
         }
     }
