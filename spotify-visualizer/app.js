@@ -88,16 +88,18 @@
         catch (_) { return null; }
     }
 
-    // On startup: if localStorage is empty, restore from URL hash
+    // On startup: restore from URL hash (iCUE source of truth — always wins)
     function loadFromHash() {
         const hash = window.location.hash;
         if (!hash.startsWith(HASH_PREFIX)) return;
         const cfg = decodeConfig(hash.slice(HASH_PREFIX.length));
         if (!cfg) return;
-        if (cfg.c && !localStorage.getItem(LS.CID)) {
+        if (cfg.c) {
             localStorage.setItem(LS.CID, cfg.c);
         }
-        if (cfg.r && !getRefreshToken()) {
+        if (cfg.r) {
+            // Mark as persistent so token survives iCUE session reloads
+            localStorage.setItem(LS.RTOKEN_REMEMBER, "1");
             setRefreshToken(cfg.r, true);
         }
     }
