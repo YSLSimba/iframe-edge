@@ -970,7 +970,7 @@
     /* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
      *  SIDEBAR TOGGLE (collapsible drawer)
      * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€*/
-    function openSidebar()  { $("widget").classList.add("sidebar-open"); }
+    function openSidebar() { $("widget").classList.add("sidebar-open"); }
     function closeSidebar() { $("widget").classList.remove("sidebar-open"); }
     function toggleSidebar() {
         if ($("widget").classList.contains("sidebar-open")) closeSidebar();
@@ -1234,7 +1234,8 @@
      *  INIT
      * ────────────────────────────────────────────────────────────────*/
     function init() {
-        enforceSameOriginFrame();
+        // Note: enforceSameOriginFrame() intentionally not called —
+        // this widget runs inside iCUE's native WebView (cross-origin by nature).
         migrateLegacyApiKeys();
         applyTheme(state.theme);
         applyLang(state.lang);
