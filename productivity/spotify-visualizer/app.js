@@ -15,6 +15,10 @@
         LANG: "pa_lang",
         CID: "pa_spotify_client_id",
         RTOKEN: "pa_spotify_refresh_token",
+        RTOKEN_REMEMBER: "pa_spotify_refresh_token_remember",
+    };
+    const SS = {
+        RTOKEN: "pa_spotify_refresh_token_session",
     };
 
     const $ = id => document.getElementById(id);
@@ -40,6 +44,43 @@
         lang: localStorage.getItem(LS.LANG) || "fr",
     };
 
+    function isRefreshTokenPersistent() {
+        return localStorage.getItem(LS.RTOKEN_REMEMBER) === "1";
+    }
+
+    function getRefreshToken() {
+        return sessionStorage.getItem(SS.RTOKEN)
+            || localStorage.getItem(LS.RTOKEN)
+            || "";
+    }
+
+    function setRefreshToken(token, persist) {
+        const value = token || "";
+        if (!value) {
+            clearRefreshToken();
+            return;
+        }
+        sessionStorage.setItem(SS.RTOKEN, value);
+        if (persist) localStorage.setItem(LS.RTOKEN, value);
+        else localStorage.removeItem(LS.RTOKEN);
+    }
+
+    function clearRefreshToken() {
+        sessionStorage.removeItem(SS.RTOKEN);
+        localStorage.removeItem(LS.RTOKEN);
+    }
+
+    function migrateRefreshTokenStorage() {
+        const legacy = localStorage.getItem(LS.RTOKEN);
+        if (!legacy) return;
+
+        // Backward compatibility: existing installs with persisted token keep persistence enabled.
+        if (localStorage.getItem(LS.RTOKEN_REMEMBER) === null) {
+            localStorage.setItem(LS.RTOKEN_REMEMBER, "1");
+        }
+        sessionStorage.setItem(SS.RTOKEN, legacy);
+    }
+
     /* ─────────────────────────────────────────────────────────────────────────
      *  i18n
      * ────────────────────────────────────────────────────────────────────────*/
@@ -52,6 +93,8 @@
             authBtn: "Autoriser & obtenir le Refresh Token",
             refreshLbl: "Refresh Token",
             tokenHint: "Après autorisation, copiez le token depuis la page callback et collez-le ici.",
+            rememberTokenLbl: "Mémoriser ce token sur cet appareil",
+            rememberTokenHint: "Désactivé = stockage en session (plus sûr, non persistant).",
             save: "Enregistrer",
             lyricsLbl: "Paroles",
             noSong: "Lancez une chanson pour voir les paroles",
@@ -76,6 +119,8 @@
             authBtn: "Authorize & get Refresh Token",
             refreshLbl: "Refresh Token",
             tokenHint: "After authorization, copy the token from the callback page and paste it here.",
+            rememberTokenLbl: "Remember this token on this device",
+            rememberTokenHint: "Disabled = session-only storage (safer, not persistent).",
             save: "Save",
             lyricsLbl: "Lyrics",
             noSong: "Play a song to see lyrics",
@@ -139,6 +184,8 @@
         el("t-auth-btn", "authBtn");
         el("t-refresh-token", "refreshLbl");
         el("t-token-hint", "tokenHint");
+        el("t-remember-token", "rememberTokenLbl");
+        el("t-remember-token-hint", "rememberTokenHint");
         el("t-lyrics", "lyricsLbl");
         el("t-no-song", "noSong");
 
@@ -168,7 +215,9 @@
     function openSettings() {
         $("settingsPanel").classList.add("open");
         $("inputClientId").value = localStorage.getItem(LS.CID) || "";
-        $("inputRefreshToken").value = localStorage.getItem(LS.RTOKEN) || "";
+        $("inputRefreshToken").value = getRefreshToken();
+        const remember = $("rememberToken");
+        if (remember) remember.checked = isRefreshTokenPersistent();
     }
 
     function closeSettings() {
@@ -192,8 +241,10 @@
     $("saveBtn").addEventListener("click", () => {
         const cid = $("inputClientId").value.trim();
         const rtkn = $("inputRefreshToken").value.trim();
+        const remember = !!($("rememberToken") && $("rememberToken").checked);
         localStorage.setItem(LS.CID, cid);
-        localStorage.setItem(LS.RTOKEN, rtkn);
+        localStorage.setItem(LS.RTOKEN_REMEMBER, remember ? "1" : "0");
+        setRefreshToken(rtkn, remember);
         showToast(t("toastSaved"));
         closeSettings();
         // Reset token so we re-fetch
@@ -229,7 +280,7 @@
      * ────────────────────────────────────────────────────────────────────────*/
     async function refreshAccessToken() {
         const cid = localStorage.getItem(LS.CID) || "";
-        const rtkn = localStorage.getItem(LS.RTOKEN) || "";
+        const rtkn = getRefreshToken();
         if (!cid || !rtkn) return false;
 
         try {
@@ -247,7 +298,7 @@
                 if (resp.status === 400 && data.error === "invalid_grant") {
                     // Token revoked/expired — clear it and show persistent reconnect banner
                     stopPolling();
-                    localStorage.removeItem(LS.RTOKEN);
+                    clearRefreshToken();
                     state.accessToken = null;
                     state.tokenExpiry = 0;
                     showOverlay("🔒", t("sessionTitle"), t("sessionSub"), t("reconnect"), () => {
@@ -260,7 +311,7 @@
             state.accessToken = data.access_token;
             state.tokenExpiry = Date.now() + (data.expires_in - 30) * 1000;
             // Spotify sometimes returns a new refresh_token — persist it immediately
-            if (data.refresh_token) localStorage.setItem(LS.RTOKEN, data.refresh_token);
+            if (data.refresh_token) setRefreshToken(data.refresh_token, isRefreshTokenPersistent());
             return true;
         } catch (_) {
             return false;
@@ -582,7 +633,7 @@
      * ────────────────────────────────────────────────────────────────────────*/
     async function poll() {
         const cid = localStorage.getItem(LS.CID) || "";
-        const rtkn = localStorage.getItem(LS.RTOKEN) || "";
+        const rtkn = getRefreshToken();
 
         if (!cid || !rtkn) {
             stopPolling();
@@ -728,12 +779,13 @@
      *  INIT
      * ────────────────────────────────────────────────────────────────────────*/
     function init() {
+        migrateRefreshTokenStorage();
         applyTheme(state.theme);
         applyLang(state.lang);
         updateStaticStrings();
 
         const cid = localStorage.getItem(LS.CID) || "";
-        const rtkn = localStorage.getItem(LS.RTOKEN) || "";
+        const rtkn = getRefreshToken();
 
         if (!cid || !rtkn) {
             showOverlay("⚙️", t("setupTitle"), t("setupSub"), t("openSettings"), () => {

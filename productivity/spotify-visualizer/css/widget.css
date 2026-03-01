@@ -576,6 +576,26 @@ html.sz-xl .lyric-line.active {
     line-height: 1.5;
 }
 
+.remember-option {
+    margin-bottom: 12px;
+}
+
+.remember-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-2);
+    cursor: pointer;
+}
+
+.remember-check input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
 .auth-btn {
     width: 100%;
     padding: 11px;
@@ -1162,6 +1182,9 @@ html.sz-xl .lyrics-ctrl-bar {
 }
 :root[data-theme="light"] .field-hint {
     color: #555555;
+}
+:root[data-theme="light"] .remember-check {
+    color: #2a2a2a;
 }
 :root[data-theme="light"] .divider {
     background: rgba(0, 0, 0, 0.14);
