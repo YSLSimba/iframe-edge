@@ -8,6 +8,7 @@
     const TOKEN_URL = "https://accounts.spotify.com/api/token";
     const API_BASE = "https://api.spotify.com/v1";
     const LRCLIB_BASE = "https://lrclib.net/api/get";
+    const LRCLIB_SEARCH = "https://lrclib.net/api/search";
     const POLL_MS = 5000;
 
     const LS = {
@@ -498,16 +499,36 @@
      * ────────────────────────────────────────────────────────────────────────*/
     async function fetchLyrics(artist, title, album, durationSec) {
         try {
+            // 1. Exact match — fastest, requires album name + duration to match LRCLib exactly
             const url = new URL(LRCLIB_BASE);
             url.searchParams.set("artist_name", artist);
             url.searchParams.set("track_name", title);
             url.searchParams.set("album_name", album || "");
             url.searchParams.set("duration", Math.round(durationSec));
             const resp = await fetch(url.toString());
-            if (!resp.ok) return [];
-            const data = await resp.json();
-            if (!data.syncedLyrics) return [];
-            return parseLRC(data.syncedLyrics);
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.syncedLyrics) return parseLRC(data.syncedLyrics);
+            }
+
+            // 2. Fallback search — no album/duration required, picks the result whose
+            //    duration is closest to the actual track so we get the right version
+            const searchUrl = new URL(LRCLIB_SEARCH);
+            searchUrl.searchParams.set("artist_name", artist);
+            searchUrl.searchParams.set("track_name", title);
+            const searchResp = await fetch(searchUrl.toString());
+            if (!searchResp.ok) return [];
+            const results = await searchResp.json();
+            if (!Array.isArray(results) || results.length === 0) return [];
+
+            const withSynced = results.filter(r => r.syncedLyrics);
+            if (withSynced.length === 0) return [];
+
+            // Pick the entry whose duration is closest to the Spotify track duration
+            withSynced.sort((a, b) =>
+                Math.abs((a.duration || 0) - durationSec) - Math.abs((b.duration || 0) - durationSec)
+            );
+            return parseLRC(withSynced[0].syncedLyrics);
         } catch (_) {
             return [];
         }
