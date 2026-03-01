@@ -167,7 +167,8 @@
             sessionSub: "Votre autorisation Spotify a été révoquée ou est expirée. Reconnectez-vous pour continuer.",
             reconnect: "Se reconnecter",
             copyUrlBtn: "Copier l'URL pour iCUE",
-            icueHint: "L'URL ci-dessous est copiée automatiquement à chaque Save. Collez-la dans les paramètres du widget iCUE — vos identifiants seront restaurés même après un changement de widget.",
+            icueHint: "L'URL ci-dessous contient vos identifiants. Collez-la dans iCUE comme src du widget — ils seront restaurés automatiquement même après un changement de widget.",
+            icueUrlPh: "Sauvegardez vos identifiants pour générer l'URL…",
             toastUrlCopied: "✓ URL copiée — collez-la dans iCUE",
         },
         en: {
@@ -197,7 +198,8 @@
             sessionSub: "Your Spotify authorization was revoked or expired. Reconnect to continue.",
             reconnect: "Reconnect",
             copyUrlBtn: "Copy URL for iCUE",
-            icueHint: "This URL is automatically copied on every Save. Paste it in the iCUE widget settings — your credentials will be restored even after switching widgets.",
+            icueHint: "This URL contains your credentials. Paste it in iCUE as the widget src — they will be restored automatically even after switching widgets.",
+            icueUrlPh: "Save your credentials to generate the URL…",
             toastUrlCopied: "✓ URL copied — paste it in iCUE",
         },
     };
@@ -253,6 +255,8 @@
         el("t-no-song", "noSong");
         el("t-icue-hint", "icueHint");
         el("t-copy-url", "copyUrlBtn");
+        const urlField = $("iCueUrl");
+        if (urlField && !urlField.value) urlField.placeholder = t("icueUrlPh");
 
         const saveBtn = $("saveBtn");
         if (saveBtn) saveBtn.textContent = t("save");
@@ -283,6 +287,13 @@
         $("inputRefreshToken").value = getRefreshToken();
         const remember = $("rememberToken");
         if (remember) remember.checked = isRefreshTokenPersistent();
+        refreshIcueUrlField();
+    }
+
+    function refreshIcueUrlField() {
+        const cid  = localStorage.getItem(LS.CID) || "";
+        const rtkn = getRefreshToken();
+        $("iCueUrl").value = (cid && rtkn) ? buildConfigUrl() : "";
     }
 
     function closeSettings() {
@@ -312,6 +323,7 @@
         setRefreshToken(rtkn, remember);
         // Keep URL hash in sync — iCUE will persist the config across widget switches
         updateHashConfig(cid, rtkn);
+        refreshIcueUrlField();
         closeSettings();
         // Reset token so we re-fetch
         state.accessToken = null;
@@ -328,6 +340,10 @@
             showToast(t("toastSaved"));
         }
     });
+
+    // Click or focus on URL field → select all for easy copy
+    $("iCueUrl").addEventListener("click",  () => $("iCueUrl").select());
+    $("iCueUrl").addEventListener("focus",  () => $("iCueUrl").select());
 
     $("copyUrlBtn").addEventListener("click", () => {
         const url = buildConfigUrl();
