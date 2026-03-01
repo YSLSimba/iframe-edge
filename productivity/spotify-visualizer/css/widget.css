@@ -104,7 +104,7 @@ body {
     backdrop-filter: blur(28px) saturate(1.8);
     -webkit-backdrop-filter: blur(28px) saturate(1.8);
     border: 1px solid var(--glass-b);
-    border-radius: 18px;
+    border-radius: 0;
     overflow: hidden;
     transition: background var(--tr), border-color var(--tr);
 }
@@ -206,19 +206,7 @@ body {
 }
 
 .vinyl-ring {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    border-radius: 14px;
-    background: radial-gradient(circle at 50% 50%,
-            transparent 28%, rgba(0, 0, 0, 0.3) 29%,
-            rgba(0, 0, 0, 0.1) 30%, transparent 31%);
-    opacity: 0;
-    transition: opacity 0.4s ease;
-}
-
-.is-playing .vinyl-ring {
-    opacity: 1;
+    display: none;
 }
 
 /* ── Track info ─────────────────────────────────────────── */
@@ -712,7 +700,7 @@ html.sz-m .col-left-inner {
 html.sz-m .album-wrap {
     width: clamp(140px, 55vmin, 260px) !important;
     height: clamp(140px, 55vmin, 260px) !important;
-    border-radius: 12px;
+    border-radius: 0;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
     flex-shrink: 0;
 }
@@ -737,7 +725,7 @@ html.sz-m #trackInfo {
     z-index: 3;
     padding: 28px 10px 6px;
     background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
-    border-radius: 0 0 18px 18px;
+    border-radius: 0;
 }
 
 html.sz-m .track-name {
@@ -767,7 +755,7 @@ html.sz-m .progress-wrap {
 }
 
 html.sz-m .progress-bar {
-    border-radius: 0 0 18px 18px;
+    border-radius: 0;
     height: 3px;
 }
 
@@ -816,7 +804,7 @@ html.sz-m .hdr {
     position: relative;
     z-index: 5;
     background: linear-gradient(rgba(0, 0, 0, 0.55) 0%, transparent 100%);
-    border-radius: 18px 18px 0 0;
+    border-radius: 0;
 }
 
 /* ── L : Two columns, layout similar to XL ── */
