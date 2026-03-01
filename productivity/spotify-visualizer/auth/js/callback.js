@@ -13,6 +13,12 @@
         document.getElementById('subtitle').textContent = subtitle;
     }
 
+    function enforceTopLevelWindow() {
+        if (window.top === window.self) return true;
+        document.body.innerHTML = '';
+        return false;
+    }
+
     function clearAuthSession() {
         sessionStorage.removeItem('pkce_verifier');
         sessionStorage.removeItem('pkce_client_id');
@@ -20,6 +26,11 @@
     }
 
     async function run() {
+        if (!enforceTopLevelWindow()) {
+            clearAuthSession();
+            return;
+        }
+
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
         const error = params.get('error');

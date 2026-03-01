@@ -12,6 +12,16 @@
         box.style.display = 'block';
     }
 
+    function enforceTopLevelWindow() {
+        if (window.top === window.self) return true;
+        document.body.innerHTML = '';
+        return false;
+    }
+
+    if (!enforceTopLevelWindow()) {
+        return;
+    }
+
     // Read client_id from URL query param
     const params = new URLSearchParams(window.location.search);
     const clientId = params.get('client_id');
