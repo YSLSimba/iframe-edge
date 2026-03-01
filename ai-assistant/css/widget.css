@@ -24,7 +24,7 @@
     --overlay-8: rgba(255, 255, 255, 0.08);
     --overlay-12: rgba(255, 255, 255, 0.12);
     --tr: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
-    --sidebar-w: 240px;
+    --sidebar-w: 260px;
 }
 
 :root[data-theme="light"] {
@@ -1127,6 +1127,44 @@ html.sz-l #widget.sidebar-open #sidebarBackdrop {
     color: var(--accent);
 }
 
+/* Optgroup section headers in custom dropdown */
+.custom-select-group-label {
+    padding: 6px 11px 3px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    border-top: 1px solid var(--border);
+    margin-top: 2px;
+    pointer-events: none;
+    user-select: none;
+}
+
+.custom-select-group-label:first-child {
+    border-top: none;
+    margin-top: 0;
+}
+
+/* Custom model text input (shows when Custom... is selected) */
+.custom-model-input {
+    margin-top: 6px;
+    background: var(--overlay-5);
+    border: 1px solid var(--accent-border);
+    border-radius: 7px;
+    color: var(--text-1);
+    font-size: 0.8rem;
+    padding: 7px 10px;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color var(--tr), box-shadow var(--tr);
+}
+
+.custom-model-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-dim);
+}
 
 /* Provider tabs */
 .provider-tabs {
@@ -1160,19 +1198,14 @@ html.sz-l #widget.sidebar-open #sidebarBackdrop {
     color: var(--accent);
 }
 
-.provider-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
+.provider-icon {
     flex-shrink: 0;
+    opacity: 0.7;
+    transition: opacity var(--tr);
 }
 
-.gemini-dot {
-    background: #4285f4;
-}
-
-.claude-dot {
-    background: #d97706;
+.provider-tab.active .provider-icon {
+    opacity: 1;
 }
 
 .provider-fields {

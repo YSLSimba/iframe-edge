@@ -1,7 +1,7 @@
 <h1 align="center">🖥️ iframe-edge</h1>
 
 <p align="center">
-  <b>All-in-one HTML/CSS/JS widgets in a single file for Productivity, Streaming, DevOps, and more.</b></br>
+  <b>All-in-one HTML/CSS/JS widgets in a single file for Productivity, Streaming, and more.</b></br>
   <i>Specially designed to be 100% responsive for Corsair Xeneon Edge & iCUE.</i>
 </p>
 
@@ -12,23 +12,24 @@
 - **No external dependencies:** Pure HTML, CSS, and vanilla JavaScript bundled in single files.
 - **Fully Responsive:** Automatically scales to fit any container size (`M`, `L`, `XL`).
 - **Plug & Play:** Just copy the code and paste it.
-- **Dark OLED / Light Mode** with a toggle on each widget.
+- **Dark Mode / Light Mode** with a toggle on each widget.
 - **EN / FR** bilingual support on all widgets.
-
+- **AI Assistant for 3 AI Models:** Google Gemini, Anthropic Claude, and OpenAI ChatGPT.
 ---
 
 ## 🗂️ Available Widgets
 
-| Widget | GitHub Pages URL |
+| Widget | iCUE `<iframe>` Code (Copy & Paste) |
 |---|---|
-| 💧 Hydration | `https://stealthylabshq.github.io/iframe-edge/productivity/hydration/` |
-| 🍅 Pomodoro | `https://stealthylabshq.github.io/iframe-edge/productivity/pomodoro/` |
-| 📝 Quick Notes | `https://stealthylabshq.github.io/iframe-edge/productivity/notes/` |
-| 🎯 Daily Focus | `https://stealthylabshq.github.io/iframe-edge/productivity/daily-focus/` |
-| ✅ Habit Tracker | `https://stealthylabshq.github.io/iframe-edge/productivity/habit-tracker/` |
-| 🧘 Posture & Blink | `https://stealthylabshq.github.io/iframe-edge/productivity/posture-reminder/` |
-| 📋 Quick Clipboard | `https://stealthylabshq.github.io/iframe-edge/productivity/quick-clipboard/` |
-| 🎵 Spotify Visualizer | `https://stealthylabshq.github.io/iframe-edge/spotify-visualizer/` |
+| 🤖 **AI Assistant** | `<iframe src="https://stealthylabshq.github.io/iframe-edge/ai-assistant/"></iframe>` |
+| 💧 Hydration | `<iframe src="https://stealthylabshq.github.io/iframe-edge/productivity/hydration/"></iframe>` |
+| 🍅 Pomodoro | `<iframe src="https://stealthylabshq.github.io/iframe-edge/productivity/pomodoro/"></iframe>` |
+| 📝 Quick Notes | `<iframe src="https://stealthylabshq.github.io/iframe-edge/productivity/notes/"></iframe>` |
+| 🎯 Daily Focus | `<iframe src="https://stealthylabshq.github.io/iframe-edge/productivity/daily-focus/"></iframe>` |
+| ✅ Habit Tracker | `<iframe src="https://stealthylabshq.github.io/iframe-edge/productivity/habit-tracker/"></iframe>` |
+| 🧘 Posture & Blink | `<iframe src="https://stealthylabshq.github.io/iframe-edge/productivity/posture-reminder/"></iframe>` |
+| 📋 Quick Clipboard | `<iframe src="https://stealthylabshq.github.io/iframe-edge/productivity/quick-clipboard/"></iframe>` |
+| 🎵 Spotify Visualizer | `<iframe src="https://stealthylabshq.github.io/iframe-edge/spotify-visualizer/"></iframe>` |
 
 
 ---
@@ -48,12 +49,25 @@ To use these widgets on your Corsair setup, you will need:
 2. In the **Widgets** list (left column), click on the **`</> iFrame`** icon.
 3. Choose your desired size: **`M`**, **`L`**, or **`XL`**.
 4. In the iFrame settings, look for the **HTML code** text area.
-5. Choose a URL from the table above and wrap it in an `<iframe>` tag like this, then **paste it** into the text area:
-   ```html
-   <iframe src="https://stealthylabshq.github.io/iframe-edge/productivity/hydration/"></iframe>
-   ```
+5. **Copy the `<iframe>` code** from the table above for your desired widget, and **paste it** into the text area.
+   *(Example: `<iframe src="https://stealthylabshq.github.io/iframe-edge/productivity/hydration/"></iframe>`)*
 
 > **🎉 Done!** The widget will load live from GitHub Pages.
+
+### 🤖 AI Assistant
+
+The AI Assistant widget requires an API key from either Google (Gemini), Anthropic (Claude), or OpenAI (ChatGPT) to function.
+
+**How to get an API Key:**
+- <img src="https://cdn.simpleicons.org/google/4285F4" width="14" height="14" style="vertical-align: middle;"> **Google Gemini (Free tier available / Pay-as-you-go [Recommended]):** Go to [Google AI Studio](https://aistudio.google.com/app/apikey), sign in with your Google account, and click "Create API Key".
+- <img src="https://cdn.simpleicons.org/anthropic/d1cdc1" width="14" height="14" style="vertical-align: middle;"> **Anthropic Claude (Pay-as-you-go):** Go to the [Anthropic Console](https://console.anthropic.com/settings/keys), sign in, and generate a new secret key.
+- <img src="https://cdn.simpleicons.org/openai/412991" width="14" height="14" style="vertical-align: middle;"> **OpenAI (Pay-as-you-go):** Go to the [OpenAI Platform](https://platform.openai.com/api-keys), sign in, and generate a new secret key.
+
+**Setup Instructions:**
+1. Add the widget to iCUE using its `<iframe>` code from the table.
+2. Click the **Settings ⚙️** icon in the top right corner of the widget.
+3. Select your preferred provider (Google, Anthropic, or OpenAI) and paste your API Key.
+4. Click **Save**. Your key is securely stored locally in your iCUE session.
 
 ### 🎵 Spotify Visualizer
 
@@ -91,12 +105,25 @@ Pour utiliser ces widgets sur votre installation Corsair, vous aurez besoin de :
 2. Dans la liste des **Widgets** (colonne gauche), cliquez sur l'icône **`</> iFrame`**.
 3. Choisissez la taille souhaitée : **`M`**, **`L`**, ou **`XL`**.
 4. Dans les réglages de l'iFrame, cherchez le champ de texte principal **code HTML**.
-5. Prenez l'URL de votre choix dans le tableau ci-dessus et insérez-la dans une balise `<iframe>` comme ceci, puis **collez** le tout dans la zone HTML de iCUE :
-   ```html
-   <iframe src="https://stealthylabshq.github.io/productivity/hydration/"></iframe>
-   ```
+5. **Copiez le code `<iframe>`** du tableau ci-dessus pour le widget souhaité, et **collez-le** dans la zone de texte.
+   *(Exemple : `<iframe src="https://stealthylabshq.github.io/iframe-edge/productivity/hydration/"></iframe>`)*
 
 > **🎉 Et voilà !** Le widget se chargera directement depuis GitHub Pages.
+
+### 🤖 Assistant IA
+
+Le widget Assistant IA nécessite une clé API de Google (Gemini), Anthropic (Claude), ou OpenAI (ChatGPT) pour fonctionner.
+
+**Comment obtenir une clé API :**
+- <img src="https://cdn.simpleicons.org/google/4285F4" width="14" height="14" style="vertical-align: middle;"> **Google Gemini (Gratuit disponible / Payant à l'usage [Recommandé]) :** Allez sur [Google AI Studio](https://aistudio.google.com/app/apikey), connectez-vous avec votre compte Google et cliquez sur "Create API Key".
+- <img src="https://cdn.simpleicons.org/anthropic/d1cdc1" width="14" height="14" style="vertical-align: middle;"> **Anthropic Claude (Payant à l'usage) :** Allez sur la [Console Anthropic](https://console.anthropic.com/settings/keys), connectez-vous et générez une nouvelle clé secrète.
+- <img src="https://cdn.simpleicons.org/openai/412991" width="14" height="14" style="vertical-align: middle;"> **OpenAI (Payant à l'usage) :** Allez sur la [Plateforme OpenAI](https://platform.openai.com/api-keys), connectez-vous et générez une nouvelle clé secrète.
+
+**Configuration :**
+1. Ajoutez le widget dans iCUE en utilisant son code `<iframe>` du tableau.
+2. Cliquez sur l'icône **Paramètres ⚙️** en haut à droite du widget.
+3. Sélectionnez votre fournisseur préféré (Google, Anthropic, ou OpenAI) et collez votre clé API.
+4. Cliquez sur **Enregistrer**. Votre clé est stockée localement de manière sécurisée dans votre session iCUE.
 
 ### 🎵 Spotify Visualizer
 

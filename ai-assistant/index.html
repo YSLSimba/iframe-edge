@@ -7,7 +7,7 @@
     <meta name="referrer" content="no-referrer" />
     <!-- connect-src includes https: to support user-configured proxy URLs -->
     <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://generativelanguage.googleapis.com https://api.anthropic.com https:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'; upgrade-insecure-requests; block-all-mixed-content;" />
+        content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://generativelanguage.googleapis.com https://api.anthropic.com https://api.openai.com https:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'; upgrade-insecure-requests; block-all-mixed-content;" />
     <script src="../productivity/theme-loader.js"></script>
     <title>AI Assistant</title>
     <link rel="icon" href="https://stealthylabs.eu/logos/favicon.png" />
@@ -25,7 +25,8 @@
         <!-- ── Header ─────────────────────────────────────────────── -->
         <div class="hdr">
             <button class="icon-btn" id="sidebarToggle" aria-label="Toggle history">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round">
                     <line x1="3" y1="6" x2="21" y2="6" />
                     <line x1="3" y1="12" x2="21" y2="12" />
                     <line x1="3" y1="18" x2="21" y2="18" />
@@ -154,10 +155,25 @@
                 <label id="t-provider-lbl"></label>
                 <div class="provider-tabs" role="group" aria-label="Provider selection">
                     <button class="provider-tab active" data-provider="gemini" id="tabGemini">
-                        <span class="provider-dot gemini-dot" aria-hidden="true"></span>Gemini
+                        <svg class="provider-icon" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"
+                            aria-hidden="true">
+                            <path
+                                d="M21.35 11.1H12.18v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81z" />
+                        </svg>Google
                     </button>
                     <button class="provider-tab" data-provider="claude" id="tabClaude">
-                        <span class="provider-dot claude-dot" aria-hidden="true"></span>Claude
+                        <svg class="provider-icon" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"
+                            fill-rule="evenodd" aria-hidden="true">
+                            <path
+                                d="M13.827 3.52h3.603L24 20h-3.603l-6.57-16.48zm-7.258 0h3.767L16.906 20h-3.674l-1.343-3.461H5.017l-1.344 3.46H0L6.57 3.522zm4.132 9.959L8.453 7.687 6.205 13.48H10.7z" />
+                        </svg>Anthropic
+                    </button>
+                    <button class="provider-tab" data-provider="openai" id="tabOpenAI">
+                        <svg class="provider-icon" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"
+                            aria-hidden="true">
+                            <path
+                                d="M22.28 9.82a5.99 5.99 0 0 0-.52-4.91 6.05 6.05 0 0 0-6.51-2.9A6.07 6.07 0 0 0 4.98 4.18a5.99 5.99 0 0 0-4 2.9 6.05 6.05 0 0 0 .74 7.1 5.98 5.98 0 0 0 .51 4.91 6.05 6.05 0 0 0 6.52 2.9A6 6 0 0 0 13.26 24a6.06 6.06 0 0 0 5.77-4.21 5.99 5.99 0 0 0 4-2.9 6.06 6.06 0 0 0-.75-7.07zm-9.02 12.6a4.48 4.48 0 0 1-2.88-1.04l.14-.08 4.78-2.76a.8.8 0 0 0 .39-.68V11.7l2.02 1.17a.07.07 0 0 1 .04.05v5.58a4.51 4.51 0 0 1-4.49 4.51zM3.6 18.3a4.47 4.47 0 0 1-.54-3.01l.14.09 4.78 2.76a.77.77 0 0 0 .78 0l5.84-3.37v2.33a.08.08 0 0 1-.03.07L9.74 19.95A4.5 4.5 0 0 1 3.6 18.3zm-1.26-10.4a4.49 4.49 0 0 1 2.37-1.97v5.69a.77.77 0 0 0 .39.67l5.82 3.36-2.02 1.17a.08.08 0 0 1-.07 0L3.99 13.8A4.5 4.5 0 0 1 2.34 7.9zm16.6 3.86l-5.84-3.37 2.02-1.17a.08.08 0 0 1 .07 0l4.83 2.79a4.49 4.49 0 0 1-.68 8.1v-5.67a.79.79 0 0 0-.4-.68zm2.01-3.02l-.14-.09-4.77-2.75a.78.78 0 0 0-.79 0L9.41 9.23V6.9a.07.07 0 0 1 .03-.06l4.83-2.79a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.14L6.3 11.7a.08.08 0 0 1-.04-.06V6.08a4.5 4.5 0 0 1 7.38-3.45l-.14.08-4.78 2.76a.8.8 0 0 0-.39.68zm1.1-2.37 2.6-1.5 2.6 1.5v3l-2.6 1.5-2.6-1.5z" />
+                        </svg>OpenAI
                     </button>
                 </div>
             </div>
@@ -168,7 +184,8 @@
                     <label for="inputGeminiKey" id="t-gemini-key-lbl"></label>
                     <input type="password" id="inputGeminiKey" autocomplete="off" placeholder="AIza…" />
                     <div class="field-hint" id="t-gemini-key-hint">
-                        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank"
+                            rel="noopener noreferrer">Google AI Studio
                             &rarr; Get API key</a>
                     </div>
                 </div>
@@ -191,7 +208,51 @@
                         <!-- Aliases / Latest pointers -->
                         <option value="gemini-flash-latest">Gemini Flash Latest</option>
                         <option value="gemini-flash-lite-latest">Gemini Flash-Lite Latest</option>
+                        <!-- Custom -->
+                        <option value="__custom__">Custom…</option>
                     </select>
+                    <input type="text" id="inputGeminiCustomModel" class="custom-model-input ui-hidden"
+                        placeholder="e.g. gemini-exp-1206" autocomplete="off" spellcheck="false" />
+                </div>
+            </div>
+
+            <!-- OpenAI fields -->
+            <div class="provider-fields hidden" id="fieldsOpenAI">
+                <div class="field">
+                    <label for="inputOpenAIKey" id="t-openai-key-lbl"></label>
+                    <input type="password" id="inputOpenAIKey" autocomplete="off" placeholder="sk-…" />
+                    <div class="field-hint" id="t-openai-key-hint">
+                        <a href="https://platform.openai.com/api-keys" target="_blank"
+                            rel="noopener noreferrer">platform.openai.com &rarr; API Keys</a>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="selectOpenAIModel" id="t-model-openai-lbl"></label>
+                    <select id="selectOpenAIModel">
+                        <optgroup label="GPT-5">
+                            <option value="gpt-5.1">GPT-5.1</option>
+                            <option value="gpt-5-mini">GPT-5 Mini</option>
+                            <option value="gpt-5-nano">GPT-5 Nano</option>
+                        </optgroup>
+                        <optgroup label="GPT-4.1">
+                            <option value="gpt-4.1">GPT-4.1</option>
+                            <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
+                            <option value="gpt-4.1-nano">GPT-4.1 Nano</option>
+                        </optgroup>
+                        <optgroup label="GPT-4o">
+                            <option value="gpt-4o" selected>GPT-4o</option>
+                            <option value="gpt-4o-mini">GPT-4o Mini</option>
+                        </optgroup>
+                        <optgroup label="Reasoning">
+                            <option value="o3">o3</option>
+                            <option value="o4-mini">o4-mini</option>
+                        </optgroup>
+                        <optgroup label="Other">
+                            <option value="__custom__">Custom…</option>
+                        </optgroup>
+                    </select>
+                    <input type="text" id="inputOpenAICustomModel" class="custom-model-input ui-hidden"
+                        placeholder="e.g. gpt-4-turbo" autocomplete="off" spellcheck="false" />
                 </div>
             </div>
 
@@ -211,7 +272,10 @@
                         <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
                         <option value="claude-opus-4-6">Claude Opus 4.6</option>
                         <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
+                        <option value="__custom__">Custom…</option>
                     </select>
+                    <input type="text" id="inputClaudeCustomModel" class="custom-model-input ui-hidden"
+                        placeholder="e.g. claude-3-opus-20240229" autocomplete="off" spellcheck="false" />
                 </div>
                 <div class="field">
                     <label for="inputProxyUrl" id="t-proxy-lbl">

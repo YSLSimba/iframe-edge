@@ -10,8 +10,10 @@
         PROVIDER: "pa_ai_provider",
         KEY_GEMINI: "pa_ai_key_gemini",
         KEY_CLAUDE: "pa_ai_key_claude",
+        KEY_OPENAI: "pa_ai_key_openai",
         MODEL_GEMINI: "pa_ai_model_gemini",
         MODEL_CLAUDE: "pa_ai_model_claude",
+        MODEL_OPENAI: "pa_ai_model_openai",
         PROXY: "pa_ai_proxy_url",
         SYSTEM: "pa_ai_system_prompt",
         CONVS: "pa_ai_conversations",
@@ -19,11 +21,13 @@
     const SS = {
         KEY_GEMINI: "pa_ai_key_gemini_session",
         KEY_CLAUDE: "pa_ai_key_claude_session",
+        KEY_OPENAI: "pa_ai_key_openai_session",
     };
 
     const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
     const CLAUDE_BASE = "https://api.anthropic.com";
     const CLAUDE_VERSION = "2023-06-01";
+    const OPENAI_BASE = "https://api.openai.com";
     const MAX_CONVS = 20;
 
     const $ = id => document.getElementById(id);
@@ -68,11 +72,15 @@
     }
 
     function sessionKeyForProvider(provider) {
-        return provider === "gemini" ? SS.KEY_GEMINI : SS.KEY_CLAUDE;
+        if (provider === "gemini") return SS.KEY_GEMINI;
+        if (provider === "openai") return SS.KEY_OPENAI;
+        return SS.KEY_CLAUDE;
     }
 
     function legacyKeyForProvider(provider) {
-        return provider === "gemini" ? LS.KEY_GEMINI : LS.KEY_CLAUDE;
+        if (provider === "gemini") return LS.KEY_GEMINI;
+        if (provider === "openai") return LS.KEY_OPENAI;
+        return LS.KEY_CLAUDE;
     }
 
     function getApiKey(provider = state.provider) {
@@ -104,6 +112,7 @@
     function migrateLegacyApiKeys() {
         getApiKey("gemini");
         getApiKey("claude");
+        getApiKey("openai");
     }
 
     function normalizeProxyUrl(raw) {
@@ -163,6 +172,10 @@
             toastInvalidProxy: "URL proxy invalide (HTTPS requis, sans auth/query/hash).",
             footerGemini: "Gemini peut se tromper. Vérifiez les informations importantes.",
             footerClaude: "Claude peut se tromper. Vérifiez les informations importantes.",
+            footerOpenAI: "ChatGPT peut se tromper. Vérifiez les informations importantes.",
+            openaiKeyLbl: "Clé API OpenAI",
+            openaiKeyHint: "platform.openai.com → API Keys",
+            modelOpenAI: "Modèle",
             s1: "Explique un concept complexe simplement",
             s2: "Aide-moi à rédiger un email professionnel",
             s3: "Analyse et améliore ce code",
@@ -201,6 +214,10 @@
             toastInvalidProxy: "Invalid proxy URL (HTTPS only, no auth/query/hash).",
             footerGemini: "Gemini may be wrong. Verify important information.",
             footerClaude: "Claude may be wrong. Verify important information.",
+            footerOpenAI: "ChatGPT may be wrong. Verify important information.",
+            openaiKeyLbl: "OpenAI API Key",
+            openaiKeyHint: "platform.openai.com → API Keys",
+            modelOpenAI: "Model",
             s1: "Explain a complex concept simply",
             s2: "Help me write a professional email",
             s3: "Analyze and improve this code",
@@ -257,8 +274,11 @@
         // t-gemini-key-hint — static HTML link, not overwritten
         el("t-claude-key-lbl", "claudeKeyLbl");
         // t-claude-key-hint — static HTML link, not overwritten
+        el("t-openai-key-lbl", "openaiKeyLbl");
+        // t-openai-key-hint — static HTML link, not overwritten
         el("t-model-gemini-lbl", "modelGemini");
         el("t-model-claude-lbl", "modelClaude");
+        el("t-model-openai-lbl", "modelOpenAI");
         el("t-proxy-lbl-text", "proxyLbl");
         el("t-proxy-hint", "proxyHint");
         el("t-system-lbl-text", "systemLbl");
@@ -282,7 +302,10 @@
 
         // Input footer
         const footer = $("inputFooter");
-        if (footer) footer.textContent = t(state.provider === "gemini" ? "footerGemini" : "footerClaude");
+        if (footer) footer.textContent = t(
+            state.provider === "gemini" ? "footerGemini" :
+                state.provider === "openai" ? "footerOpenAI" : "footerClaude"
+        );
 
         updateModelBadge();
     }
@@ -305,7 +328,9 @@
         if (!badge) return;
         const model = state.provider === "gemini"
             ? (localStorage.getItem(LS.MODEL_GEMINI) || "gemini-2.0-flash")
-            : (localStorage.getItem(LS.MODEL_CLAUDE) || "claude-sonnet-4-6");
+            : state.provider === "openai"
+                ? (localStorage.getItem(LS.MODEL_OPENAI) || "gpt-4o")
+                : (localStorage.getItem(LS.MODEL_CLAUDE) || "claude-sonnet-4-6");
         const fmt = model
             .replace("gemini-", "")
             .replace("claude-", "")
@@ -760,6 +785,62 @@
     }
 
     /* ─────────────────────────────────────────────────────────────────
+     *  OPENAI STREAMING
+     *  Standard SSE via /v1/chat/completions with stream: true
+     * ────────────────────────────────────────────────────────────────*/
+    async function streamOpenAI(messages, systemPrompt, model, key, signal, onChunk) {
+        const url = `${OPENAI_BASE}/v1/chat/completions`;
+        const msgs = [];
+        if (systemPrompt) msgs.push({ role: "system", content: systemPrompt });
+        msgs.push(...messages);
+
+        const resp = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${key}`,
+            },
+            body: JSON.stringify({ model, messages: msgs, stream: true, max_completion_tokens: 8192 }),
+            signal,
+            referrerPolicy: "no-referrer",
+        });
+
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err?.error?.message || `OpenAI HTTP ${resp.status}`);
+        }
+
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop();
+            for (const line of lines) {
+                if (!line.startsWith("data: ")) continue;
+                const data = line.slice(6).trim();
+                if (data === "[DONE]") return;
+                try {
+                    const json = JSON.parse(data);
+                    const text = json?.choices?.[0]?.delta?.content;
+                    if (text) onChunk(text);
+                } catch (_) { }
+            }
+        }
+    }
+
+    function buildOpenAIMessages(messages) {
+        return messages.map(m => ({
+            role: m.role === "user" ? "user" : "assistant",
+            content: m.content,
+        }));
+    }
+
+    /* ─────────────────────────────────────────────────────────────────
      *  SEND MESSAGE — core logic
      * ────────────────────────────────────────────────────────────────*/
     async function sendMessage() {
@@ -827,11 +908,15 @@
                 const model = localStorage.getItem(LS.MODEL_GEMINI) || "gemini-2.0-flash";
                 const contents = buildGeminiContents(conv.messages);
                 await streamGemini(contents, systemP, model, key, state.abortCtrl.signal, onChunk);
+            } else if (provider === "openai") {
+                const key = getApiKey("openai");
+                const model = localStorage.getItem(LS.MODEL_OPENAI) || "gpt-4o";
+                const msgs = buildOpenAIMessages(conv.messages);
+                await streamOpenAI(msgs, systemP, model, key, state.abortCtrl.signal, onChunk);
             } else {
                 const key = getApiKey("claude");
                 const model = localStorage.getItem(LS.MODEL_CLAUDE) || "claude-sonnet-4-6";
                 const proxy = normalizeProxyUrl(localStorage.getItem(LS.PROXY) || "");
-                // Exclude last assistant message from context if streaming
                 const msgs = buildClaudeMessages(conv.messages);
                 await streamClaude(msgs, systemP, model, key, proxy, state.abortCtrl.signal, onChunk);
             }
@@ -1001,14 +1086,17 @@
         // Populate fields
         $("inputGeminiKey").value = getApiKey("gemini");
         $("inputClaudeKey").value = getApiKey("claude");
+        $("inputOpenAIKey").value = getApiKey("openai");
         $("inputProxyUrl").value = localStorage.getItem(LS.PROXY) || "";
         $("inputSystem").value = localStorage.getItem(LS.SYSTEM) || "";
         $("selectGeminiModel").value = localStorage.getItem(LS.MODEL_GEMINI) || "gemini-2.0-flash";
         $("selectClaudeModel").value = localStorage.getItem(LS.MODEL_CLAUDE) || "claude-sonnet-4-6";
+        $("selectOpenAIModel").value = localStorage.getItem(LS.MODEL_OPENAI) || "gpt-4o";
 
         // Sync custom dropdowns to the values above
         syncCustomSelect($("selectGeminiModel"));
         syncCustomSelect($("selectClaudeModel"));
+        syncCustomSelect($("selectOpenAIModel"));
 
         activateProviderTab(state.provider);
     }
@@ -1031,6 +1119,7 @@
         });
         $("fieldsGemini").classList.toggle("hidden", provider !== "gemini");
         $("fieldsClaude").classList.toggle("hidden", provider !== "claude");
+        $("fieldsOpenAI").classList.toggle("hidden", provider !== "openai");
         // Temporarily update state for badge preview
         state.provider = provider;
         updateModelBadge();
@@ -1047,13 +1136,31 @@
             return;
         }
 
+        // Resolve __custom__ sentinel for all three providers
+        const rawGeminiModel = $("selectGeminiModel").value;
+        const geminiModel = rawGeminiModel === "__custom__"
+            ? ($("inputGeminiCustomModel")?.value.trim() || "gemini-2.0-flash")
+            : rawGeminiModel;
+
+        const rawClaudeModel = $("selectClaudeModel").value;
+        const claudeModel = rawClaudeModel === "__custom__"
+            ? ($("inputClaudeCustomModel")?.value.trim() || "claude-sonnet-4-6")
+            : rawClaudeModel;
+
+        const rawOpenAIModel = $("selectOpenAIModel").value;
+        const openaiModel = rawOpenAIModel === "__custom__"
+            ? ($("inputOpenAICustomModel")?.value.trim() || "gpt-4o")
+            : rawOpenAIModel;
+
         localStorage.setItem(LS.PROVIDER, provider);
         setApiKey("gemini", $("inputGeminiKey").value);
         setApiKey("claude", $("inputClaudeKey").value);
+        setApiKey("openai", $("inputOpenAIKey").value);
         localStorage.setItem(LS.PROXY, proxy);
         localStorage.setItem(LS.SYSTEM, $("inputSystem").value.trim());
-        localStorage.setItem(LS.MODEL_GEMINI, $("selectGeminiModel").value);
-        localStorage.setItem(LS.MODEL_CLAUDE, $("selectClaudeModel").value);
+        localStorage.setItem(LS.MODEL_GEMINI, geminiModel);
+        localStorage.setItem(LS.MODEL_CLAUDE, claudeModel);
+        localStorage.setItem(LS.MODEL_OPENAI, openaiModel);
 
         state.provider = provider;
         updateModelBadge();
@@ -1173,30 +1280,78 @@
             trigger.appendChild(valueSpan);
             trigger.appendChild(svg);
 
-            // Build options list
+            // Build options list — support <optgroup>
             const list = document.createElement("div");
             list.className = "custom-select-options";
 
-            Array.from(sel.options).forEach(opt => {
-                // Skip optgroup-style comments (text nodes)
-                if (opt.disabled) return;
-                const item = document.createElement("div");
-                item.className = "custom-select-option" + (opt.selected ? " selected" : "");
-                item.textContent = opt.text;
-                item.dataset.value = opt.value;
+            // Resolve the custom input associated with this select (if any)
+            const customInput = sel.parentNode.querySelector(".custom-model-input");
 
-                item.addEventListener("click", e => {
-                    e.stopPropagation();
-                    sel.value = opt.value;
-                    valueSpan.textContent = opt.text;
-                    list.querySelectorAll(".custom-select-option").forEach(o => o.classList.remove("selected"));
-                    item.classList.add("selected");
-                    wrapper.classList.remove("open");
-                    sel.dispatchEvent(new Event("change"));
-                });
+            // Helper: toggle custom model input visibility
+            function toggleCustomInput(isCustom) {
+                if (!customInput) return;
+                if (isCustom) customInput.classList.remove("ui-hidden");
+                else customInput.classList.add("ui-hidden");
+            }
 
-                list.appendChild(item);
+            // Iterate children of select: optgroup or option
+            Array.from(sel.children).forEach(child => {
+                if (child.tagName === "OPTGROUP") {
+                    // Group label
+                    const label = document.createElement("div");
+                    label.className = "custom-select-group-label";
+                    label.textContent = child.label;
+                    list.appendChild(label);
+
+                    // Group options
+                    Array.from(child.children).forEach(opt => {
+                        if (opt.disabled) return;
+                        const item = document.createElement("div");
+                        item.className = "custom-select-option" + (opt.selected ? " selected" : "");
+                        item.textContent = opt.text;
+                        item.dataset.value = opt.value;
+                        item.addEventListener("click", e => {
+                            e.stopPropagation();
+                            sel.value = opt.value;
+                            valueSpan.textContent = opt.value === "__custom__"
+                                ? (customInput?.value || opt.text)
+                                : opt.text;
+                            list.querySelectorAll(".custom-select-option").forEach(o => o.classList.remove("selected"));
+                            item.classList.add("selected");
+                            wrapper.classList.remove("open");
+                            toggleCustomInput(opt.value === "__custom__");
+                            if (opt.value === "__custom__") setTimeout(() => customInput?.focus(), 50);
+                            sel.dispatchEvent(new Event("change"));
+                        });
+                        list.appendChild(item);
+                    });
+                } else if (child.tagName === "OPTION") {
+                    if (child.disabled) return;
+                    const item = document.createElement("div");
+                    item.className = "custom-select-option" + (child.selected ? " selected" : "");
+                    item.textContent = child.text;
+                    item.dataset.value = child.value;
+                    item.addEventListener("click", e => {
+                        e.stopPropagation();
+                        sel.value = child.value;
+                        valueSpan.textContent = child.text;
+                        list.querySelectorAll(".custom-select-option").forEach(o => o.classList.remove("selected"));
+                        item.classList.add("selected");
+                        wrapper.classList.remove("open");
+                        toggleCustomInput(child.value === "__custom__");
+                        if (child.value === "__custom__") setTimeout(() => customInput?.focus(), 50);
+                        sel.dispatchEvent(new Event("change"));
+                    });
+                    list.appendChild(item);
+                }
             });
+
+            // Update trigger label when custom input is typed
+            if (customInput) {
+                customInput.addEventListener("input", () => {
+                    if (sel.value === "__custom__") valueSpan.textContent = customInput.value || "Custom…";
+                });
+            }
 
             wrapper.appendChild(trigger);
             wrapper.appendChild(list);
@@ -1205,7 +1360,6 @@
             trigger.addEventListener("click", e => {
                 e.stopPropagation();
                 const isOpen = wrapper.classList.contains("open");
-                // Close all other custom selects
                 document.querySelectorAll(".custom-select.open").forEach(cs => cs.classList.remove("open"));
                 if (!isOpen) wrapper.classList.add("open");
             });
@@ -1222,6 +1376,9 @@
 
             // Hide native select, insert custom select after it
             sel.parentNode.insertBefore(wrapper, sel.nextSibling);
+
+            // Initialise custom input visibility
+            toggleCustomInput(sel.value === "__custom__");
         });
 
         // Global close on outside click
