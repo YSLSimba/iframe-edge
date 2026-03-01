@@ -50,9 +50,12 @@
     }
 
     function getRefreshToken() {
-        return sessionStorage.getItem(SS.RTOKEN)
-            || localStorage.getItem(LS.RTOKEN)
-            || "";
+        const sessionToken = sessionStorage.getItem(SS.RTOKEN) || "";
+        if (sessionToken) return sessionToken;
+        if (isRefreshTokenPersistent()) return localStorage.getItem(LS.RTOKEN) || "";
+        // Defensive cleanup in case an old persisted token remains.
+        localStorage.removeItem(LS.RTOKEN);
+        return "";
     }
 
     function setRefreshToken(token, persist) {
