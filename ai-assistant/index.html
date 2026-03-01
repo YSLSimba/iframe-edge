@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="no-referrer" />
+    <!-- connect-src includes https: to support user-configured proxy URLs -->
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://generativelanguage.googleapis.com https://api.anthropic.com https:; object-src 'none'; base-uri 'none'; form-action 'none';" />
+    <script src="../productivity/theme-loader.js"></script>
+    <title>AI Assistant</title>
+    <link rel="icon" href="https://stealthylabs.eu/logos/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="./css/widget.css" />
+</head>
+
+<body>
+    <div id="widget">
+
+        <!-- ── Header ─────────────────────────────────────────────── -->
+        <div class="hdr">
+            <div class="hdr-icon" aria-hidden="true">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2M7.5 13A2.5 2.5 0 0 0 5 15.5 2.5 2.5 0 0 0 7.5 18 2.5 2.5 0 0 0 10 15.5 2.5 2.5 0 0 0 7.5 13m9 0a2.5 2.5 0 0 0-2.5 2.5 2.5 2.5 0 0 0 2.5 2.5 2.5 2.5 0 0 0 2.5-2.5 2.5 2.5 0 0 0-2.5-2.5z" />
+                </svg>
+            </div>
+            <span class="hdr-title" id="t-title">AI Assistant</span>
+            <span class="model-badge" id="modelBadge" aria-live="polite"></span>
+
+            <button class="icon-btn hdr-sep" id="newChatBtn" aria-label="New chat">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+            </button>
+            <button class="icon-btn" id="themeToggle" aria-label="Toggle theme">🌙</button>
+            <button class="icon-btn" id="langToggle" aria-label="Toggle language">FR</button>
+            <button class="icon-btn" id="settingsToggle" aria-label="Settings">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round">
+                    <circle cx="12" cy="12" r="3" />
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- ── Main content ────────────────────────────────────────── -->
+        <div id="content">
+
+            <!-- Sidebar: conversation history (sz-xl only) -->
+            <aside id="sidebar" aria-label="Conversation history">
+                <div class="sidebar-hdr">
+                    <span id="t-history"></span>
+                    <button class="sidebar-new-btn" id="sidebarNewBtn" aria-label="New conversation">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5" stroke-linecap="round">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                    </button>
+                </div>
+                <div id="historyList" role="list"></div>
+            </aside>
+
+            <!-- Chat area -->
+            <div id="chatWrap">
+
+                <!-- Setup overlay — no API key -->
+                <div id="stateOverlay" class="hidden">
+                    <div class="state-inner">
+                        <div class="state-glow" aria-hidden="true"></div>
+                        <div class="state-icon" id="stateIcon">🤖</div>
+                        <div class="state-title" id="stateTitle">AI Assistant</div>
+                        <div class="state-sub" id="stateSub"></div>
+                        <button class="state-btn ui-hidden" id="stateAction"></button>
+                    </div>
+                </div>
+
+                <!-- Welcome screen — key set but no messages -->
+                <div id="welcomeWrap" class="hidden">
+                    <div class="welcome-inner">
+                        <div class="welcome-orb" aria-hidden="true"></div>
+                        <div class="welcome-title" id="t-welcome-title"></div>
+                        <div class="suggestions" id="suggestions" role="list">
+                            <button class="suggestion-chip" data-prompt-key="s1" role="listitem"></button>
+                            <button class="suggestion-chip" data-prompt-key="s2" role="listitem"></button>
+                            <button class="suggestion-chip" data-prompt-key="s3" role="listitem"></button>
+                            <button class="suggestion-chip" data-prompt-key="s4" role="listitem"></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages -->
+                <div id="messagesWrap" role="log" aria-live="polite" aria-label="Conversation">
+                    <div id="messages"></div>
+                </div>
+
+                <!-- Input bar -->
+                <div id="inputWrap">
+                    <div id="inputBar">
+                        <textarea id="msgInput" rows="1" placeholder="Message…" aria-label="Message" autocomplete="off"
+                            spellcheck="true"></textarea>
+                        <button id="sendBtn" aria-label="Send message" title="Send (Enter)">
+                            <svg id="sendIcon" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="22" y1="2" x2="11" y2="13" />
+                                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                            </svg>
+                            <svg id="stopIcon" class="ui-hidden" width="14" height="14" viewBox="0 0 24 24"
+                                fill="currentColor">
+                                <rect x="5" y="5" width="14" height="14" rx="2" />
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="input-footer" id="inputFooter" aria-hidden="true"></div>
+                </div>
+
+            </div><!-- /chatWrap -->
+        </div><!-- /content -->
+
+        <!-- ── Settings panel ────────────────────────────────────── -->
+        <div id="settingsPanel" role="dialog" aria-label="Settings" aria-modal="true">
+            <div class="settings-hdr">
+                <h2 id="t-settings"></h2>
+                <button class="icon-btn" id="closeSettings" aria-label="Close settings">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        stroke-linecap="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Provider tabs -->
+            <div class="field">
+                <label id="t-provider-lbl"></label>
+                <div class="provider-tabs" role="group" aria-label="Provider selection">
+                    <button class="provider-tab active" data-provider="gemini" id="tabGemini">
+                        <span class="provider-dot gemini-dot" aria-hidden="true"></span>Gemini
+                    </button>
+                    <button class="provider-tab" data-provider="claude" id="tabClaude">
+                        <span class="provider-dot claude-dot" aria-hidden="true"></span>Claude
+                    </button>
+                </div>
+            </div>
+
+            <!-- Gemini fields -->
+            <div class="provider-fields" id="fieldsGemini">
+                <div class="field">
+                    <label for="inputGeminiKey" id="t-gemini-key-lbl"></label>
+                    <input type="password" id="inputGeminiKey" autocomplete="off" placeholder="AIza…" />
+                    <div class="field-hint" id="t-gemini-key-hint">
+                        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio
+                            &rarr; Get API key</a>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="selectGeminiModel" id="t-model-gemini-lbl"></label>
+                    <select id="selectGeminiModel">
+                        <!-- Gemini 3.x — latest generation -->
+                        <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
+                        <option value="gemini-3-pro-preview">Gemini 3 Pro Preview</option>
+                        <option value="gemini-3-flash-preview">Gemini 3 Flash Preview</option>
+                        <!-- Gemini 2.5 -->
+                        <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                        <option value="gemini-2.5-pro-preview-05-06">Gemini 2.5 Pro Preview</option>
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                        <option value="gemini-2.5-flash-preview-04-17">Gemini 2.5 Flash Preview</option>
+                        <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite</option>
+                        <!-- Gemini 2.0 -->
+                        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                        <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash-Lite</option>
+                        <!-- Aliases / Latest pointers -->
+                        <option value="gemini-flash-latest">Gemini Flash Latest</option>
+                        <option value="gemini-flash-lite-latest">Gemini Flash-Lite Latest</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Claude fields -->
+            <div class="provider-fields hidden" id="fieldsClaude">
+                <div class="field">
+                    <label for="inputClaudeKey" id="t-claude-key-lbl"></label>
+                    <input type="password" id="inputClaudeKey" autocomplete="off" placeholder="sk-ant-…" />
+                    <div class="field-hint" id="t-claude-key-hint">
+                        <a href="https://console.anthropic.com/settings/keys" target="_blank"
+                            rel="noopener">console.anthropic.com &rarr; API Keys</a>
+                    </div>
+                </div>
+                <div class="field">
+                    <label for="selectClaudeModel" id="t-model-claude-lbl"></label>
+                    <select id="selectClaudeModel">
+                        <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+                        <option value="claude-opus-4-6">Claude Opus 4.6</option>
+                        <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="inputProxyUrl" id="t-proxy-lbl">
+                        <span id="t-proxy-lbl-text"></span> <span class="badge-optional" id="t-optional"></span>
+                    </label>
+                    <input type="url" id="inputProxyUrl" autocomplete="off"
+                        placeholder="https://my-proxy.example.com" />
+                    <div class="field-hint" id="t-proxy-hint"></div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- System prompt -->
+            <div class="field">
+                <label for="inputSystem" id="t-system-lbl">
+                    <span id="t-system-lbl-text"></span> <span class="badge-optional" id="t-optional-2"></span>
+                </label>
+                <textarea id="inputSystem" rows="3" autocomplete="off" placeholder=""></textarea>
+            </div>
+
+            <button class="save-btn" id="saveBtn">
+                <span id="t-save"></span>
+            </button>
+
+            <div class="divider"></div>
+
+            <button class="danger-btn" id="clearHistoryBtn">
+                <span id="t-clear"></span>
+            </button>
+        </div>
+
+    </div><!-- /widget -->
+
+    <!-- Toast -->
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="./app.js"></script>
+</body>
+
+</html>
