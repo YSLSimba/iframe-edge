@@ -877,6 +877,10 @@
         $("selectGeminiModel").value = localStorage.getItem(LS.MODEL_GEMINI) || "gemini-2.0-flash";
         $("selectClaudeModel").value = localStorage.getItem(LS.MODEL_CLAUDE) || "claude-sonnet-4-6";
 
+        // Sync custom dropdowns to the values above
+        syncCustomSelect($("selectGeminiModel"));
+        syncCustomSelect($("selectClaudeModel"));
+
         activateProviderTab(state.provider);
     }
 
@@ -991,6 +995,106 @@
     }
 
     /* ─────────────────────────────────────────────────────────────────
+     *  CUSTOM SELECT — WebView-safe dropdown replacement
+     * ────────────────────────────────────────────────────────────────*/
+    function syncCustomSelect(sel) {
+        if (!sel || !sel._csValue) return;
+        const selectedOpt = sel.options[sel.selectedIndex];
+        sel._csValue.textContent = selectedOpt ? selectedOpt.text : "";
+        if (sel._csList) {
+            sel._csList.querySelectorAll(".custom-select-option").forEach(o => {
+                o.classList.toggle("selected", o.dataset.value === sel.value);
+            });
+        }
+    }
+
+    function initCustomSelects() {
+        document.querySelectorAll(".field select").forEach(sel => {
+            // Build wrapper
+            const wrapper = document.createElement("div");
+            wrapper.className = "custom-select";
+
+            // Build trigger
+            const trigger = document.createElement("div");
+            trigger.className = "custom-select-trigger";
+            trigger.setAttribute("tabindex", "0");
+
+            const valueSpan = document.createElement("span");
+            valueSpan.className = "custom-select-value";
+            valueSpan.textContent = sel.options[sel.selectedIndex]?.text || "";
+
+            // Chevron SVG
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("width", "10"); svg.setAttribute("height", "10");
+            svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("fill", "none");
+            svg.setAttribute("stroke", "currentColor"); svg.setAttribute("stroke-width", "2.5");
+            svg.setAttribute("stroke-linecap", "round"); svg.setAttribute("stroke-linejoin", "round");
+            svg.classList.add("custom-select-arrow");
+            const poly = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+            poly.setAttribute("points", "6 9 12 15 18 9");
+            svg.appendChild(poly);
+
+            trigger.appendChild(valueSpan);
+            trigger.appendChild(svg);
+
+            // Build options list
+            const list = document.createElement("div");
+            list.className = "custom-select-options";
+
+            Array.from(sel.options).forEach(opt => {
+                // Skip optgroup-style comments (text nodes)
+                if (opt.disabled) return;
+                const item = document.createElement("div");
+                item.className = "custom-select-option" + (opt.selected ? " selected" : "");
+                item.textContent = opt.text;
+                item.dataset.value = opt.value;
+
+                item.addEventListener("click", e => {
+                    e.stopPropagation();
+                    sel.value = opt.value;
+                    valueSpan.textContent = opt.text;
+                    list.querySelectorAll(".custom-select-option").forEach(o => o.classList.remove("selected"));
+                    item.classList.add("selected");
+                    wrapper.classList.remove("open");
+                    sel.dispatchEvent(new Event("change"));
+                });
+
+                list.appendChild(item);
+            });
+
+            wrapper.appendChild(trigger);
+            wrapper.appendChild(list);
+
+            // Toggle open on trigger click
+            trigger.addEventListener("click", e => {
+                e.stopPropagation();
+                const isOpen = wrapper.classList.contains("open");
+                // Close all other custom selects
+                document.querySelectorAll(".custom-select.open").forEach(cs => cs.classList.remove("open"));
+                if (!isOpen) wrapper.classList.add("open");
+            });
+
+            // Keyboard support
+            trigger.addEventListener("keydown", e => {
+                if (e.key === "Enter" || e.key === " ") { e.preventDefault(); trigger.click(); }
+                if (e.key === "Escape") wrapper.classList.remove("open");
+            });
+
+            // Store refs for syncCustomSelect
+            sel._csValue = valueSpan;
+            sel._csList = list;
+
+            // Hide native select, insert custom select after it
+            sel.parentNode.insertBefore(wrapper, sel.nextSibling);
+        });
+
+        // Global close on outside click
+        document.addEventListener("click", () => {
+            document.querySelectorAll(".custom-select.open").forEach(cs => cs.classList.remove("open"));
+        });
+    }
+
+    /* ─────────────────────────────────────────────────────────────────
      *  INIT
      * ────────────────────────────────────────────────────────────────*/
     function init() {
@@ -1007,6 +1111,7 @@
 
         updateModelBadge();
         updateStaticStrings();
+        initCustomSelects();   // replace native selects with WebView-safe dropdowns
         refreshSetupOverlay();
         renderHistory();
         showChatState();
