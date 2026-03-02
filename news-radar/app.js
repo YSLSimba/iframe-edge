@@ -109,6 +109,7 @@
             groupFr: "France",
             groupUsUk: "Etats-Unis / Royaume-Uni",
             groupEu: "Europe",
+            groupMe: "Moyen-Orient",
             groupTech: "Tech",
             groupGnews: "Google News",
             groupOther: "Autre",
@@ -135,6 +136,7 @@
             groupFr: "France",
             groupUsUk: "United States / United Kingdom",
             groupEu: "Europe",
+            groupMe: "Middle East",
             groupTech: "Tech",
             groupGnews: "Google News",
             groupOther: "Other",
@@ -159,7 +161,7 @@
             el.textContent = t("btnOpen");
         });
         // Dropdown group headers
-        const groupMap = { "t-group-gnews": "groupGnews", "t-group-fr": "groupFr", "t-group-usuk": "groupUsUk", "t-group-eu": "groupEu", "t-group-tech": "groupTech", "t-group-other": "groupOther" };
+        const groupMap = { "t-group-gnews": "groupGnews", "t-group-fr": "groupFr", "t-group-usuk": "groupUsUk", "t-group-eu": "groupEu", "t-group-me": "groupMe", "t-group-tech": "groupTech", "t-group-other": "groupOther" };
         for (const [id, key] of Object.entries(groupMap)) {
             const el = $(id);
             if (el && i18n[currentLang][key]) el.textContent = t(key);
@@ -170,8 +172,8 @@
 
     // Group order per language: FR = French first, EN = English first
     const GROUP_ORDER = {
-        fr: ["t-group-gnews", "t-group-fr", "t-group-usuk", "t-group-eu", "t-group-tech", "t-group-other"],
-        en: ["t-group-gnews", "t-group-usuk", "t-group-tech", "t-group-eu", "t-group-fr", "t-group-other"],
+        fr: ["t-group-gnews", "t-group-fr", "t-group-usuk", "t-group-me", "t-group-eu", "t-group-tech", "t-group-other"],
+        en: ["t-group-gnews", "t-group-usuk", "t-group-me", "t-group-tech", "t-group-eu", "t-group-fr", "t-group-other"],
     };
 
     function reorderDropdownGroups() {
