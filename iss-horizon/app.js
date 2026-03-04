@@ -12,6 +12,10 @@
         { id: 'ffcV3jCwwPk', name: 'NASA ISS Update', type: 'youtube' },
         { id: '5TriOUb0leg', name: 'ISS 4K HDR Live', type: 'youtube' },
         { id: '21X5lGlDOfg', name: 'NASA Live', type: 'youtube' },
+        { id: 'FV4Q9DryTG8', name: 'NASA ISS Live (Official)', type: 'youtube' },
+        { id: 'fO9e9jnhYK8', name: 'Sen 4K Earth Live', type: 'youtube' },
+        { id: '0FBiyFpV__g', name: 'ISS 24/7 Stream', type: 'youtube' },
+        { id: 'vytmBNhc9ig', name: 'NASA Earth Live 24/7', type: 'youtube' },
         { id: '17074538', name: 'NASA HDEV (IBM)', type: 'ibm' }
     ];
     const query = new URLSearchParams(location.search);
