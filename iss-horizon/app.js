@@ -111,6 +111,9 @@
 
             issData = { lat: d.latitude, lon: d.longitude, alt: d.altitude, vel: d.velocity };
 
+            // Cache all telemetry for instant first paint on next load
+            localStorage.setItem('iss_cache', JSON.stringify(issData));
+
             // Update telemetry panel
             updateTelemetry(d.velocity, d.altitude, d.latitude, d.longitude);
 
@@ -132,31 +135,12 @@
     const ORBITAL_PERIOD = 92.68 * 60;                // seconds (~92.68 min)
     const EARTH_ROT_RATE = 360 / 86400;               // deg/s
     const GROUND_TRACK_RATE = 360 / ORBITAL_PERIOD - EARTH_ROT_RATE; // deg/s eastward
-    const ORBIT_RANGE = ORBITAL_PERIOD * 1.5;          // 1.5 orbits each way
-    const ORBIT_STEP = 30;                             // seconds between points
+    const ORBIT_RANGE = ORBITAL_PERIOD * 6;            // 6 orbits each way → fills all visible world copies
+    const ORBIT_STEP = 60;                             // seconds between points (60 s = smooth enough + fast)
 
     let prevLat = null;
     let isAscending = true;
 
-    /**
-     * Split a polyline at the antimeridian (±180°) to avoid wrap-around glitches.
-     */
-    function splitAtAntimeridian(points) {
-        const segments = [];
-        let seg = [];
-        for (let i = 0; i < points.length; i++) {
-            if (seg.length > 0) {
-                const dLon = Math.abs(points[i][1] - seg[seg.length - 1][1]);
-                if (dLon > 180) {
-                    segments.push(seg);
-                    seg = [];
-                }
-            }
-            seg.push(points[i]);
-        }
-        if (seg.length > 1) segments.push(seg);
-        return segments;
-    }
 
     /**
      * Compute orbital ground track points relative to a known position.
@@ -173,21 +157,20 @@
         const pastPts = [];
         const futurePts = [];
 
-        // Past orbit (going backward in time)
+        // Past orbit — keep longitude continuous (no wrap) so Leaflet draws
+        // across repeated world-copy tiles without any splits.
         for (let dt = -ORBIT_RANGE; dt <= 0; dt += ORBIT_STEP) {
             const phase = phase0 + (2 * Math.PI / ORBITAL_PERIOD) * dt;
             const newLat = inc * Math.sin(phase);
-            let newLon = lon + GROUND_TRACK_RATE * dt;
-            newLon = ((newLon + 540) % 360) - 180;  // normalize to [-180, 180]
+            const newLon = lon + GROUND_TRACK_RATE * dt;   // unwrapped
             pastPts.push([newLat, newLon]);
         }
 
-        // Future orbit (going forward in time)
+        // Future orbit — same approach
         for (let dt = 0; dt <= ORBIT_RANGE; dt += ORBIT_STEP) {
             const phase = phase0 + (2 * Math.PI / ORBITAL_PERIOD) * dt;
             const newLat = inc * Math.sin(phase);
-            let newLon = lon + GROUND_TRACK_RATE * dt;
-            newLon = ((newLon + 540) % 360) - 180;
+            const newLon = lon + GROUND_TRACK_RATE * dt;   // unwrapped
             futurePts.push([newLat, newLon]);
         }
 
@@ -198,7 +181,7 @@
     // ── LEAFLET 2D GROUND TRACK MAP
     // =====================================================================
     let leafletMap = null, issMapMarker = null;
-    let pastTrackGroup = null, futureTrackGroup = null;
+    let pastPolylines = [], futurePolylines = [];
     let mapFollowISS = true;
 
     function initLeafletMap() {
@@ -214,10 +197,12 @@
             scrollWheelZoom: true,
             doubleClickZoom: true,
             keyboard: true,
+            minZoom: 2,
+            maxZoom: 6,
         }).setView([20, 0], 2);
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            maxZoom: 18,
+            maxZoom: 6,
             subdomains: 'abcd',
         }).addTo(leafletMap);
 
@@ -230,9 +215,10 @@
         });
         issMapMarker = L.marker([0, 0], { icon: issIcon, zIndexOffset: 1000 }).addTo(leafletMap);
 
-        // Layer groups for orbit tracks
-        pastTrackGroup = L.layerGroup().addTo(leafletMap);
-        futureTrackGroup = L.layerGroup().addTo(leafletMap);
+        // Pre-create polylines for orbit tracks (reused each update to avoid flicker)
+        // We create a pool; excess lines are hidden, missing ones are added on demand.
+        pastPolylines = [];
+        futurePolylines = [];
 
         leafletMap.on('dragstart', () => {
             mapFollowISS = false;
@@ -256,30 +242,38 @@
         // Compute orbital tracks
         const { pastPts, futurePts } = computeOrbitTrack(lat, lon, isAscending);
 
-        // Render past orbit (white)
-        pastTrackGroup.clearLayers();
-        const pastSegments = splitAtAntimeridian(pastPts);
-        pastSegments.forEach(seg => {
-            L.polyline(seg, {
-                color: '#ffffff',
-                weight: 1.8,
-                opacity: 0.45,
-                dashArray: null,
-                className: 'orbit-past-line',
-            }).addTo(pastTrackGroup);
+        // ── Update orbit polylines in-place (no clearLayers → no flicker) ──
+        function syncPolylines(pool, segments, style) {
+            // Update existing polylines
+            segments.forEach((seg, i) => {
+                if (pool[i]) {
+                    pool[i].setLatLngs(seg);
+                } else {
+                    pool[i] = L.polyline(seg, style).addTo(leafletMap);
+                }
+            });
+            // Hide (remove) surplus polylines
+            for (let i = segments.length; i < pool.length; i++) {
+                leafletMap.removeLayer(pool[i]);
+            }
+            pool.length = segments.length;
+        }
+
+        // Render past orbit (white) — single continuous polyline, no split needed
+        syncPolylines(pastPolylines, [pastPts], {
+            color: '#ffffff',
+            weight: 1.8,
+            opacity: 0.45,
+            className: 'orbit-past-line',
         });
 
-        // Render future orbit (yellow)
-        futureTrackGroup.clearLayers();
-        const futureSegments = splitAtAntimeridian(futurePts);
-        futureSegments.forEach(seg => {
-            L.polyline(seg, {
-                color: '#ffd700',
-                weight: 1.8,
-                opacity: 0.55,
-                dashArray: '6, 4',
-                className: 'orbit-future-line',
-            }).addTo(futureTrackGroup);
+        // Render future orbit (yellow) — same
+        syncPolylines(futurePolylines, [futurePts], {
+            color: '#ffd700',
+            weight: 1.8,
+            opacity: 0.55,
+            dashArray: '6, 4',
+            className: 'orbit-future-line',
         });
 
         // Follow ISS
@@ -298,5 +292,15 @@
 
     // Start Leaflet
     initLeafletMap();
+
+    // Render track + telemetry immediately with cached data (before API responds)
+    try {
+        const cached = JSON.parse(localStorage.getItem('iss_cache'));
+        if (cached && !isNaN(cached.lat) && !isNaN(cached.lon)) {
+            issData = cached;
+            updateTelemetry(cached.vel, cached.alt, cached.lat, cached.lon);
+            updateLeafletMap(cached.lat, cached.lon);
+        }
+    } catch (_) { /* no cache yet */ }
 
 })();
