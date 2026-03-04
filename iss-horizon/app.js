@@ -8,6 +8,7 @@
 
     // YouTube & IBM Video sources (2026)
     const SOURCES = [
+        { id: 'zPH5KtjJFaQ', name: 'HD Views', type: 'youtube' },
         { id: 'ffcV3jCwwPk', name: 'NASA ISS Update', type: 'youtube' },
         { id: '5TriOUb0leg', name: 'ISS 4K HDR Live', type: 'youtube' },
         { id: '21X5lGlDOfg', name: 'NASA Live', type: 'youtube' },
@@ -289,8 +290,8 @@
         issMapMarker = L.marker([0, 0], { icon: issIcon, zIndexOffset: 1000 }).addTo(leafletMap);
 
         leafletMap.on('dragstart', () => {
-            mapFollowISS = false;
-            $('btnFollow').classList.remove('active');
+            // In follow mode, block drag — only the button can toggle follow off
+            if (mapFollowISS) return;
         });
 
         // ── ISS Pass Prediction on Right-Click ───────────────
@@ -461,16 +462,25 @@
         });
 
         if (mapFollowISS && leafletMap) {
-            leafletMap.panTo([lat, lon], { animate: true, duration: 0.8 });
+            leafletMap.setView([lat, lon], leafletMap.getZoom(), { animate: true, duration: 0.8 });
+        }
+    }
+
+    function setFollowMode(enabled) {
+        mapFollowISS = enabled;
+        $('btnFollow').classList.toggle('active', enabled);
+        if (leafletMap) {
+            if (enabled) {
+                leafletMap.dragging.disable();
+                leafletMap.setView([issData.lat, issData.lon], leafletMap.getZoom(), { animate: true });
+            } else {
+                leafletMap.dragging.enable();
+            }
         }
     }
 
     $('btnFollow').addEventListener('click', () => {
-        mapFollowISS = !mapFollowISS;
-        $('btnFollow').classList.toggle('active', mapFollowISS);
-        if (mapFollowISS && leafletMap) {
-            leafletMap.panTo([issData.lat, issData.lon], { animate: true });
-        }
+        setFollowMode(!mapFollowISS);
     });
 
     initLeafletMap();
