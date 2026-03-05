@@ -16,7 +16,9 @@
         { id: 'fO9e9jnhYK8', name: 'Sen 4K Earth Live', type: 'youtube' },
         { id: '0FBiyFpV__g', name: 'ISS 24/7 Stream', type: 'youtube' },
         { id: 'vytmBNhc9ig', name: 'NASA Earth Live 24/7', type: 'youtube' },
-        { id: '17074538', name: 'NASA HDEV (IBM)', type: 'ibm' }
+        { id: '17074538', name: 'NASA HDEV (IBM)', type: 'ibm' },
+        { id: 'ntv1', name: 'NASA Public (HLS)', type: 'hls', url: 'https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8' },
+        { id: 'ntv2', name: 'NASA Media (HLS)', type: 'hls', url: 'https://ntv2.akamaized.net/hls/live/2014078/NASA-NTV2-HLS/master.m3u8' }
     ];
     const query = new URLSearchParams(location.search);
     const forcedProvider = (query.get('provider') || '').toLowerCase();
@@ -26,7 +28,8 @@
     const IS_ICUE_WEBVIEW = /icue|corsair/i.test(navigator.userAgent || '');
     const FORCE_IBM_ONLY = forcedProvider === 'ibm' || forcedProvider === 'safe';
     const FORCE_ICUE_SAFE = IS_ICUE_WEBVIEW && !allowIcueBlocked && forcedProvider !== 'youtube';
-    const ALLOW_YOUTUBE = !IS_LOCAL_FILE && !FORCE_IBM_ONLY && !FORCE_ICUE_SAFE;
+    const FORCE_HLS = forcedProvider === 'hls' || FORCE_ICUE_SAFE;
+    const ALLOW_YOUTUBE = !IS_LOCAL_FILE && !FORCE_IBM_ONLY && !FORCE_HLS;
     const THEATER_DEFAULT = true;
     const KNOWN_UNSTABLE_YOUTUBE_IDS = new Set(['0FBiyFpV__g']);
     const ICUE_BLOCKED_YOUTUBE_IDS = new Set([
@@ -36,22 +39,26 @@
         'vytmBNhc9ig'  // NASA Earth Live 24/7
     ]);
     const FALLBACK_IBM_SOURCE = SOURCES.find(s => s.type === 'ibm') || SOURCES[0];
-    const PLAYABLE_SOURCES = ALLOW_YOUTUBE
-        ? SOURCES.filter((s) => {
-            if (s.type !== 'youtube') return true;
-            if (!allowUnstable && KNOWN_UNSTABLE_YOUTUBE_IDS.has(s.id)) return false;
-            if (IS_ICUE_WEBVIEW && !allowIcueBlocked && ICUE_BLOCKED_YOUTUBE_IDS.has(s.id)) return false;
-            return true;
-        })
-        : SOURCES.filter(s => s.type === 'ibm');
+    const PLAYABLE_SOURCES = FORCE_HLS
+        ? SOURCES.filter(s => s.type === 'hls')
+        : ALLOW_YOUTUBE
+            ? SOURCES.filter((s) => {
+                if (s.type !== 'youtube') return true;
+                if (!allowUnstable && KNOWN_UNSTABLE_YOUTUBE_IDS.has(s.id)) return false;
+                if (IS_ICUE_WEBVIEW && !allowIcueBlocked && ICUE_BLOCKED_YOUTUBE_IDS.has(s.id)) return false;
+                return true;
+            })
+            : SOURCES.filter(s => s.type === 'ibm');
     if (!PLAYABLE_SOURCES.length) PLAYABLE_SOURCES.push(...SOURCES);
     let currentSourceIdx = 0;
 
     const $ = (id) => document.getElementById(id);
     let issData = { lat: 0, lon: 0, alt: 408, vel: 7660 };
 
-    // ── Video Player (YouTube / IBM iframe) ──────────────────────────
+    // ── Video Player (YouTube / IBM iframe + HLS native) ────────────
     const iframe = $('videoIframe');
+    const video = $('videoPlayer');
+    let hlsInstance = null;
     const btnMute = $('btnMute');
     const iconMute = $('iconMute');
     const btnSwitchSource = $('btnSwitchSource');
@@ -109,13 +116,57 @@
         return source;
     }
 
+    function destroyHLS() {
+        if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; }
+    }
+
+    function initHLS(url) {
+        destroyHLS();
+        if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+            hlsInstance = new Hls({
+                maxLiveSyncPlaybackRate: 1.5,
+                liveSyncDurationCount: 3,
+                liveMaxLatencyDurationCount: 10,
+            });
+            hlsInstance.loadSource(url);
+            hlsInstance.attachMedia(video);
+            hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+                videoZone.classList.remove('is-error');
+                video.play().catch(() => {});
+            });
+            hlsInstance.on(Hls.Events.ERROR, (_, data) => {
+                if (data.fatal) {
+                    videoZone.classList.add('is-error');
+                    if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hlsInstance.startLoad();
+                    else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) hlsInstance.recoverMediaError();
+                }
+            });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = url;
+            video.addEventListener('loadedmetadata', () => video.play());
+        }
+    }
+
     function loadSource(source) {
         const playable = resolvePlayableSource(source);
-        iframe.src = buildIframeSrc(playable, isMuted);
         lbSource.textContent = playable.name;
         videoZone.classList.remove('is-error');
         const theaterOn = THEATER_DEFAULT && playable.type === 'youtube';
         document.body.classList.toggle('is-theater', theaterOn);
+
+        if (playable.type === 'hls') {
+            // HLS: use native <video> element
+            iframe.style.display = 'none';
+            video.style.display = 'block';
+            video.muted = isMuted;
+            initHLS(playable.url);
+        } else {
+            // YouTube / IBM: use iframe
+            destroyHLS();
+            video.style.display = 'none';
+            iframe.style.display = 'block';
+            iframe.src = buildIframeSrc(playable, isMuted);
+        }
         return playable;
     }
 
@@ -152,8 +203,13 @@
         isMuted = !isMuted;
         try { localStorage.setItem('iss_mute', isMuted); } catch (e) { }
         updateMuteIcon();
-        // Reload iframe with new mute state
-        loadSource(PLAYABLE_SOURCES[currentSourceIdx]);
+        // Toggle mute on current player
+        const currentSrc = PLAYABLE_SOURCES[currentSourceIdx];
+        if (currentSrc && currentSrc.type === 'hls') {
+            video.muted = isMuted; // native mute, no reload
+        } else {
+            loadSource(currentSrc); // iframe needs reload
+        }
     });
 
     function updateMuteIcon() {
