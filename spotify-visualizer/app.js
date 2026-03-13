@@ -4,7 +4,7 @@
     /* ─────────────────────────────────────────────────────────────────────────
      *  CONSTANTS & STATE
      * ────────────────────────────────────────────────────────────────────────*/
-    const LOGIN_URL = "https://stealthylabshq.github.io/iframe-edge/spotify-visualizer/auth/login.html";
+    const LOGIN_URL = "https://yslsimba.github.io/iframe-edge/spotify-visualizer/auth/login.html";
     const TOKEN_URL = "https://accounts.spotify.com/api/token";
     const API_BASE = "https://api.spotify.com/v1";
     const LRCLIB_BASE = "https://lrclib.net/api/get";
@@ -135,34 +135,34 @@
      *  i18n
      * ────────────────────────────────────────────────────────────────────────*/
     const i18n = {
-        fr: {
+       en: {
             title: "Spotify",
-            settings: "⚙️ Paramètres",
+            settings: "⚙️ Settings",
             clientIdLbl: "Spotify Client ID",
-            clientHint: "Depuis votre tableau de bord Spotify Developer. Voir le README.",
-            authBtn: "Autoriser & obtenir le Refresh Token",
+            clientHint: "From your Spotify Developer Dashboard. See README for setup guide.",
+            authBtn: "Authorize & get Refresh Token",
             refreshLbl: "Refresh Token",
-            tokenHint: "Après autorisation, copiez le token depuis la page callback et collez-le ici.",
-            save: "Enregistrer",
-            lyricsLbl: "Paroles",
-            noSong: "Lancez une chanson pour voir les paroles",
-            noLyrics: "Paroles non disponibles",
-            notPlaying: "En attente...",
-            notPlayingSub: "Démarrez la lecture sur Spotify.",
-            setupTitle: "Configuration requise",
-            setupSub: "Ouvrez les paramètres pour ajouter votre Client ID et Refresh Token Spotify.",
-            openSettings: "Ouvrir les paramètres",
-            toastSaved: "✓ Paramètres enregistrés",
-            toastSavedCopied: "✓ Enregistré — URL iCUE copiée ! Collez-la dans les paramètres du widget iCUE.",
-            toastError: "Erreur de connexion Spotify",
-            toastReauth: "⚠️ Token expiré — ré-autorisez dans les paramètres",
-            sessionTitle: "Session expirée",
-            sessionSub: "Votre autorisation Spotify a été révoquée ou est expirée. Reconnectez-vous pour continuer.",
-            reconnect: "Se reconnecter",
-            copyUrlBtn: "Copier l'URL pour iCUE",
-            icueHint: "L'URL ci-dessous contient votre Client ID. Collez-la dans iCUE — vous devrez ré-autoriser le token dans les paramètres du widget.",
-            icueUrlPh: "Sauvegardez votre Client ID pour générer l'URL…",
-            toastUrlCopied: "✓ URL copiée — collez-la dans iCUE",
+            tokenHint: "After authorization, copy the token from the callback page and paste it here.",
+            save: "Save",
+            lyricsLbl: "Lyrics",
+            noSong: "Play a song to see lyrics",
+            noLyrics: "Lyrics not available",
+            notPlaying: "Not playing",
+            notPlayingSub: "Start playback on any Spotify device.",
+            setupTitle: "Setup Required",
+            setupSub: "Open settings to add your Spotify Client ID and Refresh Token.",
+            openSettings: "Open Settings",
+            toastSaved: "✓ Settings saved",
+            toastSavedCopied: "✓ Saved — iCUE URL copied! Paste it in your iCUE widget settings.",
+            toastError: "Spotify connection error",
+            toastReauth: "⚠️ Token expired — re-authorize in settings",
+            sessionTitle: "Session expired",
+            sessionSub: "Your Spotify authorization was revoked or expired. Reconnect to continue.",
+            reconnect: "Reconnect",
+            copyUrlBtn: "Copy URL for iCUE",
+            icueHint: "This URL contains your Client ID. Paste it in iCUE — you will need to re-authorize the token in the widget settings.",
+            icueUrlPh: "Save your Client ID to generate the URL…",
+            toastUrlCopied: "✓ URL copied — paste it in iCUE",
         },
         en: {
             title: "Spotify",
